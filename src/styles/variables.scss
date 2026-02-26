@@ -1,0 +1,202 @@
+// Feishu-inspired Design System
+// Clean, professional, and efficient UI language
+
+:root {
+  // Primary Colors - Feishu Blue (Low saturation, professional)
+  --primary-50: #f0f7ff;
+  --primary-100: #e0effe;
+  --primary-200: #bae0fd;
+  --primary-300: #7ccbfd;
+  --primary-400: #36b1fa;
+  --primary-500: #0c9df8;
+  --primary-600: #0378d5;
+  --primary-700: #055fa8;
+  --primary-800: #0a4f8a;
+  --primary-900: #0e4273;
+
+  // Secondary Colors - Soft Cyan
+  --secondary-50: #ecfdff;
+  --secondary-100: #d4f7fc;
+  --secondary-200: #b0eef9;
+  --secondary-300: #7ae2f5;
+  --secondary-400: #3ccfee;
+  --secondary-500: #14b6dc;
+  --secondary-600: #0893b9;
+  --secondary-700: #0b7697;
+  --secondary-800: #11607c;
+  --secondary-900: #145068;
+
+  // Neutral Colors - Feishu Gray Scale (Blue-tinted)
+  --gray-50: #f5f7fa;
+  --gray-100: #ebeef2;
+  --gray-200: #dee3e9;
+  --gray-300: #c5cdd6;
+  --gray-400: #9aa5b1;
+  --gray-500: #6b7785;
+  --gray-600: #4e5969;
+  --gray-700: #374151;
+  --gray-800: #272e3b;
+  --gray-900: #1d2129;
+
+  // Semantic Colors - Success Scale
+  --success-50: #e6f7f1;
+  --success-100: #c8f0e4;
+  --success-200: #9de4cd;
+  --success-300: #6cd1b2;
+  --success-400: #3eb896;
+  --success-500: #00b578;
+  --success-600: #009a65;
+  --success-700: #007f54;
+  --success-800: #006543;
+  --success-900: #005236;
+
+  // Semantic Colors - Warning Scale
+  --warning-50: #fff4e6;
+  --warning-100: #ffe8cc;
+  --warning-200: #ffd1a3;
+  --warning-300: #ffb37a;
+  --warning-400: #ff9352;
+  --warning-500: #ff7d00;
+  --warning-600: #d96b00;
+  --warning-700: #b35900;
+  --warning-800: #8f4700;
+  --warning-900: #703800;
+
+  // Semantic Colors - Danger Scale
+  --danger-50: #ffece8;
+  --danger-100: #ffd7d1;
+  --danger-200: #ffb3a7;
+  --danger-300: #ff8a7d;
+  --danger-400: #f76560;
+  --danger-500: #f53f3f;
+  --danger-600: #cf2b2b;
+  --danger-700: #ab1f1f;
+  --danger-800: #891717;
+  --danger-900: #6d1212;
+
+  // Legacy semantic color aliases
+  --success-color: var(--success-500);
+  --success-light: var(--success-50);
+  --warning-color: var(--warning-500);
+  --warning-light: var(--warning-50);
+  --danger-color: var(--danger-500);
+  --danger-light: var(--danger-50);
+  --info-color: var(--primary-500);
+  --info-light: var(--primary-50);
+
+  // Background Colors
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --bg-tertiary: #ebeef2;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f2f3f5;
+  --bg-active: #e8eaed;
+
+  // Text Colors
+  --text-primary: #1d2129;
+  --text-secondary: #4e5969;
+  --text-tertiary: #86909c;
+  --text-quaternary: #c5cdd6;
+  --text-disabled: #c5cdd6;
+  --text-inverse: #ffffff;
+
+  // Border Colors
+  --border-light: #ebeef2;
+  --border-medium: #dee3e9;
+  --border-strong: #c5cdd6;
+
+  // Shadow System - Feishu Style (Soft and subtle)
+  --shadow-xs: 0 1px 2px rgba(29, 33, 41, 0.04);
+  --shadow-sm: 0 2px 4px rgba(29, 33, 41, 0.06);
+  --shadow-md: 0 4px 8px rgba(29, 33, 41, 0.08);
+  --shadow-lg: 0 8px 16px rgba(29, 33, 41, 0.1);
+  --shadow-xl: 0 12px 24px rgba(29, 33, 41, 0.12);
+  --shadow-2xl: 0 16px 32px rgba(29, 33, 41, 0.14);
+
+  // Spacing System - Feishu 4px Base with comfortable gaps
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  // Border Radius - Feishu Style (Generous rounding)
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  // Typography - Feishu Style (Clear hierarchy)
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+  // Font Sizes
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 28px;
+
+  // Font Weights
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  // Line Heights
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  // Transitions - Feishu Style (Smooth and natural)
+  --transition-fast: 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --transition-normal: 250ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --transition-slow: 350ms cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  // Z-Index Scale
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+// Dark Mode Support
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1d2129;
+    --bg-secondary: #272e3b;
+    --bg-tertiary: #374151;
+    --bg-elevated: #272e3b;
+    --bg-hover: #2f3744;
+    --bg-active: #374151;
+
+    --text-primary: #f5f7fa;
+    --text-secondary: #c5cdd6;
+    --text-tertiary: #86909c;
+    --text-disabled: #4e5969;
+
+    --border-light: #374151;
+    --border-medium: #4e5969;
+    --border-strong: #6b7785;
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.35);
+    --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.4);
+    --shadow-2xl: 0 16px 32px rgba(0, 0, 0, 0.45);
+  }
+}
