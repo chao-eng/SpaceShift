@@ -13,7 +13,6 @@ pub struct ChromeLaunchResult {
     pub error: Option<String>,
 }
 
-/// Store process info including the user data directory
 struct ProcessInfo {
     child: Child,
     user_data_dir: PathBuf,
@@ -36,135 +35,59 @@ impl ChromeManager {
         }
     }
 
-    /// Check if Chrome is running for a specific profile by checking system processes
-    /// Uses multiple detection methods for better reliability in sandboxed environments
     fn check_chrome_processes_by_profile(&self, user_data_dir: &PathBuf) -> bool {
         let dir_str = user_data_dir.to_string_lossy();
         let dir_str_ref: &str = &dir_str;
         
-        // Normalize path for comparison (handle symlinks, relative paths, etc.)
         let normalized_dir = std::fs::canonicalize(user_data_dir).unwrap_or_else(|_| user_data_dir.clone());
         let normalized_dir_str = normalized_dir.to_string_lossy();
 
-        #[cfg(target_os = "macos")]
-        {
-            // Method 1: Use pgrep with full command line
-            if let Ok(output) = Command::new("/usr/bin/pgrep").args(&["-a", "-f", "Google Chrome"]).output() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines() {
-                    if line.contains("--user-data-dir") {
-                        // Extract the user-data-dir from the command line
-                        if let Some(idx) = line.find("--user-data-dir=") {
-                            let start = idx + "--user-data-dir=".len();
-                            let end = line[start..].find(' ').map(|i| start + i).unwrap_or(line.len());
-                            let process_dir = &line[start..end];
-                            
-                            // Compare normalized paths
-                            if process_dir == dir_str_ref || process_dir == normalized_dir_str.as_ref() {
-                                return true;
-                            }
-                            // Also check if one contains the other (for path variations)
-                            if process_dir.contains(dir_str_ref) || dir_str_ref.contains(process_dir) {
-                                return true;
-                            }
+        if let Ok(output) = Command::new("/usr/bin/pgrep").args(&["-a", "-f", "Google Chrome"]).output() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if line.contains("--user-data-dir") {
+                    if let Some(idx) = line.find("--user-data-dir=") {
+                        let start = idx + "--user-data-dir=".len();
+                        let end = line[start..].find(' ').map(|i| start + i).unwrap_or(line.len());
+                        let process_dir = &line[start..end];
+                        
+                        if process_dir == dir_str_ref || process_dir == normalized_dir_str.as_ref() {
+                            return true;
                         }
-                    }
-                }
-            }
-
-            // Method 2: Use ps aux for broader search
-            if let Ok(output) = Command::new("/bin/ps").args(&["aux"]).output() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines() {
-                    if (line.contains("Google Chrome") || line.contains("Chrome"))
-                        && line.contains("--user-data-dir") {
-                        if let Some(idx) = line.find("--user-data-dir=") {
-                            let start = idx + "--user-data-dir=".len();
-                            let end = line[start..].find(' ').map(|i| start + i).unwrap_or(line.len());
-                            let process_dir = &line[start..end];
-                            
-                            if process_dir == dir_str_ref || process_dir == normalized_dir_str.as_ref() {
-                                return true;
-                            }
-                            if process_dir.contains(dir_str_ref) || dir_str_ref.contains(process_dir) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Method 3: Use lsof to find open files in the profile directory
-            if let Ok(output) = Command::new("/usr/sbin/lsof").args(&["+D", dir_str_ref]).output() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines() {
-                    if line.contains("Google Chrome") || line.contains("Chrome") {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        #[cfg(target_os = "windows")]
-        {
-            // Use wmic to query process command lines
-            if let Ok(output) = Command::new("wmic")
-                .args(&["process", "where", "name='chrome.exe'", "get", "ProcessId,CommandLine", "/format:csv"])
-                .output() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines().skip(1) {
-                    if line.contains("--user-data-dir") {
-                        if let Some(idx) = line.find("--user-data-dir=") {
-                            let start = idx + "--user-data-dir=".len();
-                            let end = line[start..].find(',').map(|i| start + i).unwrap_or(line.len());
-                            let process_dir = &line[start..end].trim_matches('"');
-                            
-                            if process_dir.eq_ignore_ascii_case(dir_str_ref) 
-                                || process_dir.eq_ignore_ascii_case(&normalized_dir_str) {
-                                return true;
-                            }
+                        if process_dir.contains(dir_str_ref) || dir_str_ref.contains(process_dir) {
+                            return true;
                         }
                     }
                 }
             }
         }
 
-        #[cfg(target_os = "linux")]
-        {
-            // Method 1: pgrep
-            if let Ok(output) = Command::new("/usr/bin/pgrep").args(&["-a", "-f", "chrome"]).output() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines() {
-                    if line.contains("--user-data-dir") {
-                        if let Some(idx) = line.find("--user-data-dir=") {
-                            let start = idx + "--user-data-dir=".len();
-                            let end = line[start..].find(' ').map(|i| start + i).unwrap_or(line.len());
-                            let process_dir = &line[start..end];
-                            
-                            if process_dir == dir_str_ref || process_dir == normalized_dir_str.as_ref() {
-                                return true;
-                            }
+        if let Ok(output) = Command::new("/bin/ps").args(&["aux"]).output() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if (line.contains("Google Chrome") || line.contains("Chrome"))
+                    && line.contains("--user-data-dir") {
+                    if let Some(idx) = line.find("--user-data-dir=") {
+                        let start = idx + "--user-data-dir=".len();
+                        let end = line[start..].find(' ').map(|i| start + i).unwrap_or(line.len());
+                        let process_dir = &line[start..end];
+                        
+                        if process_dir == dir_str_ref || process_dir == normalized_dir_str.as_ref() {
+                            return true;
+                        }
+                        if process_dir.contains(dir_str_ref) || dir_str_ref.contains(process_dir) {
+                            return true;
                         }
                     }
                 }
             }
+        }
 
-            // Method 2: ps aux
-            if let Ok(output) = Command::new("/bin/ps").args(&["aux"]).output() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines() {
-                    if (line.contains("chrome") || line.contains("google-chrome"))
-                        && line.contains("--user-data-dir") {
-                        if let Some(idx) = line.find("--user-data-dir=") {
-                            let start = idx + "--user-data-dir=".len();
-                            let end = line[start..].find(' ').map(|i| start + i).unwrap_or(line.len());
-                            let process_dir = &line[start..end];
-                            
-                            if process_dir == dir_str_ref || process_dir == normalized_dir_str.as_ref() {
-                                return true;
-                            }
-                        }
-                    }
+        if let Ok(output) = Command::new("/usr/sbin/lsof").args(&["+D", dir_str_ref]).output() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if line.contains("Google Chrome") || line.contains("Chrome") {
+                    return true;
                 }
             }
         }
@@ -172,59 +95,7 @@ impl ChromeManager {
         false
     }
 
-    #[cfg(not(target_os = "macos"))]
-    fn get_chrome_executable() -> PathBuf {
-        #[cfg(target_os = "windows")]
-        {
-            let paths = [
-                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-            ];
-            
-            for path in &paths {
-                let pb = PathBuf::from(path);
-                if pb.exists() {
-                    return pb;
-                }
-            }
-            
-            PathBuf::from("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe")
-        }
-        
-        #[cfg(target_os = "linux")]
-        {
-            let paths = [
-                "/usr/bin/google-chrome",
-                "/usr/bin/google-chrome-stable",
-                "/usr/bin/chromium",
-                "/usr/bin/chromium-browser",
-            ];
-            
-            for path in &paths {
-                let pb = PathBuf::from(path);
-                if pb.exists() {
-                    return pb;
-                }
-            }
-            
-            PathBuf::from("/usr/bin/google-chrome")
-        }
-    }
-
     pub fn launch_chrome(&self, profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
-        #[cfg(target_os = "macos")]
-        {
-            self.launch_chrome_macos(profile_id, user_data_dir, url)
-        }
-        
-        #[cfg(not(target_os = "macos"))]
-        {
-            self.launch_chrome_direct(profile_id, user_data_dir, url)
-        }
-    }
-    
-    #[cfg(target_os = "macos")]
-    fn launch_chrome_macos(&self, profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
         let mut cmd = Command::new("open");
         cmd.arg("-n");
         cmd.arg("-a");
@@ -267,73 +138,16 @@ impl ChromeManager {
             },
         }
     }
-    
-    #[cfg(not(target_os = "macos"))]
-    fn launch_chrome_direct(&self, profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
-        let chrome_path = Self::get_chrome_executable();
-        
-        if !chrome_path.exists() {
-            return ChromeLaunchResult {
-                success: false,
-                pid: None,
-                error: Some(format!("Chrome executable not found at: {:?}", chrome_path)),
-            };
-        }
-
-        let mut cmd = Command::new(&chrome_path);
-        
-        cmd.arg(format!("--user-data-dir={}", user_data_dir.display()));
-        
-        let optimized_args = NetworkOptimizer::get_optimized_args();
-        for arg in optimized_args {
-            cmd.arg(arg);
-        }
-        
-        if let Some(url) = url {
-            cmd.arg(url);
-        }
-        
-        cmd.stdin(std::process::Stdio::null());
-        cmd.stdout(std::process::Stdio::null());
-        cmd.stderr(std::process::Stdio::null());
-
-        match cmd.spawn() {
-            Ok(child) => {
-                let pid = child.id();
-                let mut processes = self.running_processes.lock().unwrap();
-                processes.insert(profile_id.to_string(), ProcessInfo {
-                    child,
-                    user_data_dir: user_data_dir.clone(),
-                });
-
-                ChromeLaunchResult {
-                    success: true,
-                    pid: Some(pid),
-                    error: None,
-                }
-            }
-            Err(e) => ChromeLaunchResult {
-                success: false,
-                pid: None,
-                error: Some(format!("Failed to launch Chrome: {}", e)),
-            },
-        }
-    }
 
     pub fn is_chrome_running(&self, profile_id: &str, user_data_dir: Option<&PathBuf>) -> bool {
         let mut processes = self.running_processes.lock().unwrap();
 
         if let Some(process_info) = processes.get_mut(profile_id) {
-            // First check if the child process is still running
             match process_info.child.try_wait() {
                 Ok(None) => {
-                    // Process is still running, also verify by checking system processes
                     if self.check_chrome_processes_by_profile(&process_info.user_data_dir) {
                         return true;
                     }
-                    // Child thinks it's running but no system process found
-                    // This can happen if Chrome forked and parent exited
-                    // Check using the provided user_data_dir as fallback
                     if let Some(dir) = user_data_dir {
                         if self.check_chrome_processes_by_profile(dir) {
                             return true;
@@ -342,8 +156,6 @@ impl ChromeManager {
                     false
                 }
                 Ok(Some(_)) => {
-                    // Process has exited, but Chrome might have forked
-                    // Check system processes before removing
                     if self.check_chrome_processes_by_profile(&process_info.user_data_dir) {
                         return true;
                     }
@@ -356,96 +168,24 @@ impl ChromeManager {
                 }
             }
         } else if let Some(dir) = user_data_dir {
-            // No tracked process, but check system anyway
             self.check_chrome_processes_by_profile(dir)
         } else {
             false
         }
     }
 
-    pub fn bring_to_front(&self, pid: u32) -> Result<(), String> {
-        #[cfg(target_os = "macos")]
-        {
-            // Try using osascript to bring Chrome window to front
-            let script = format!(
-                r#"tell application "Google Chrome"
-                    activate
-                end tell"#
-            );
-            
-            match Command::new("/usr/bin/osascript").arg("-e").arg(&script).output() {
-                Ok(output) => {
-                    if output.status.success() {
-                        return Ok(());
-                    }
-                }
-                Err(_) => {}
-            }
-            
-            // Fallback: try using System Events
-            let script = format!(
-                r#"tell application "System Events"
-                    set frontmost of every process whose unix id is {} to true
-                end tell"#,
-                pid
-            );
-            
-            match Command::new("/usr/bin/osascript").arg("-e").arg(&script).output() {
-                Ok(output) => {
-                    if output.status.success() {
-                        Ok(())
-                    } else {
-                        Err(format!("osascript failed: {}", String::from_utf8_lossy(&output.stderr)))
-                    }
-                }
-                Err(e) => Err(format!("Failed to execute osascript: {}", e)),
-            }
-        }
+    pub fn bring_to_front(&self, _pid: u32) -> Result<(), String> {
+        let script = r#"tell application "Google Chrome" to activate"#;
         
-        #[cfg(target_os = "windows")]
-        {
-            use std::os::windows::process::CommandExt;
-            const CREATE_NO_WINDOW: u32 = 0x08000000;
-            
-            let script = format!(
-                r#"$hwnd = (Get-Process -Id {}).MainWindowHandle; 
-                   [void][System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic');
-                   [Microsoft.VisualBasic.Interaction]::AppActivate($hwnd)"#,
-                pid
-            );
-            
-            match Command::new("powershell")
-                .arg("-Command")
-                .arg(&script)
-                .creation_flags(CREATE_NO_WINDOW)
-                .output() 
-            {
-                Ok(output) => {
-                    if output.status.success() {
-                        Ok(())
-                    } else {
-                        Err(format!("PowerShell failed: {}", String::from_utf8_lossy(&output.stderr)))
-                    }
+        match Command::new("/usr/bin/osascript").arg("-e").arg(script).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    Ok(())
+                } else {
+                    Err(format!("osascript failed: {}", String::from_utf8_lossy(&output.stderr)))
                 }
-                Err(e) => Err(format!("Failed to execute PowerShell: {}", e)),
             }
-        }
-        
-        #[cfg(target_os = "linux")]
-        {
-            match Command::new("wmctrl")
-                .args(&["-i", "-r", &format!("0x{:x}", pid), "-b", "add,above"])
-                .output() 
-            {
-                Ok(output) => {
-                    if output.status.success() {
-                        Ok(())
-                    } else {
-                        Err(format!("wmctrl failed: {}", String::from_utf8_lossy(&output.stderr)))
-                    }
-                }
-                Err(e) => Err(format!("Failed to execute wmctrl: {}", e)),
-            }
+            Err(e) => Err(format!("Failed to execute osascript: {}", e)),
         }
     }
 
