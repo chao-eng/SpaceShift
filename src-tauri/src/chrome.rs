@@ -172,32 +172,10 @@ impl ChromeManager {
         false
     }
 
+    #[cfg(not(target_os = "macos"))]
     fn get_chrome_executable() -> PathBuf {
-        #[cfg(target_os = "macos")]
-        {
-            // Check common Chrome locations on macOS
-            let user = std::env::var("USER").unwrap_or_default();
-            let user_app_path = format!("/Users/{}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", user);
-            
-            let paths = [
-                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                &user_app_path,
-            ];
-            
-            for path in &paths {
-                let pb = PathBuf::from(path);
-                if pb.exists() {
-                    return pb;
-                }
-            }
-            
-            // Default fallback
-            PathBuf::from("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
-        }
-        
         #[cfg(target_os = "windows")]
         {
-            // Check common Chrome locations on Windows
             let paths = [
                 "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
                 "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
@@ -215,7 +193,6 @@ impl ChromeManager {
         
         #[cfg(target_os = "linux")]
         {
-            // Check common Chrome locations on Linux
             let paths = [
                 "/usr/bin/google-chrome",
                 "/usr/bin/google-chrome-stable",
@@ -235,6 +212,64 @@ impl ChromeManager {
     }
 
     pub fn launch_chrome(&self, profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
+        #[cfg(target_os = "macos")]
+        {
+            self.launch_chrome_macos(profile_id, user_data_dir, url)
+        }
+        
+        #[cfg(not(target_os = "macos"))]
+        {
+            self.launch_chrome_direct(profile_id, user_data_dir, url)
+        }
+    }
+    
+    #[cfg(target_os = "macos")]
+    fn launch_chrome_macos(&self, profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
+        let mut cmd = Command::new("open");
+        cmd.arg("-n");
+        cmd.arg("-a");
+        cmd.arg("Google Chrome");
+        cmd.arg("--args");
+        cmd.arg(format!("--user-data-dir={}", user_data_dir.display()));
+        
+        let optimized_args = NetworkOptimizer::get_optimized_args();
+        for arg in optimized_args {
+            cmd.arg(arg);
+        }
+        
+        if let Some(url) = url {
+            cmd.arg(url);
+        }
+        
+        cmd.stdin(std::process::Stdio::null());
+        cmd.stdout(std::process::Stdio::null());
+        cmd.stderr(std::process::Stdio::null());
+
+        match cmd.spawn() {
+            Ok(child) => {
+                let pid = child.id();
+                let mut processes = self.running_processes.lock().unwrap();
+                processes.insert(profile_id.to_string(), ProcessInfo {
+                    child,
+                    user_data_dir: user_data_dir.clone(),
+                });
+
+                ChromeLaunchResult {
+                    success: true,
+                    pid: Some(pid),
+                    error: None,
+                }
+            }
+            Err(e) => ChromeLaunchResult {
+                success: false,
+                pid: None,
+                error: Some(format!("Failed to launch Chrome: {}", e)),
+            },
+        }
+    }
+    
+    #[cfg(not(target_os = "macos"))]
+    fn launch_chrome_direct(&self, profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
         let chrome_path = Self::get_chrome_executable();
         
         if !chrome_path.exists() {
@@ -247,31 +282,20 @@ impl ChromeManager {
 
         let mut cmd = Command::new(&chrome_path);
         
-        // Inherit environment variables from parent process
-        cmd.envs(std::env::vars());
-        
-        // Set working directory to user home
-        if let Ok(home) = std::env::var("HOME") {
-            cmd.current_dir(&home);
-        }
-        
-        // IMPORTANT: Redirect stdout/stderr to prevent blocking
-        // Chrome outputs a lot of logs which can block the pipe buffer
-        cmd.stdout(std::process::Stdio::null());
-        cmd.stderr(std::process::Stdio::null());
-        
         cmd.arg(format!("--user-data-dir={}", user_data_dir.display()));
         
-        // Add all optimized launch arguments
         let optimized_args = NetworkOptimizer::get_optimized_args();
         for arg in optimized_args {
             cmd.arg(arg);
         }
         
-        
         if let Some(url) = url {
             cmd.arg(url);
         }
+        
+        cmd.stdin(std::process::Stdio::null());
+        cmd.stdout(std::process::Stdio::null());
+        cmd.stderr(std::process::Stdio::null());
 
         match cmd.spawn() {
             Ok(child) => {
