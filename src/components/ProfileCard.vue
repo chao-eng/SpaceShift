@@ -80,14 +80,6 @@
                 <el-icon><FolderOpened /></el-icon>
                 <span>查看目录</span>
               </el-dropdown-item>
-              <el-dropdown-item 
-                v-if="profile.is_running" 
-                command="kill"
-                class="danger-item"
-              >
-                <el-icon><CircleClose /></el-icon>
-                <span>强制关闭</span>
-              </el-dropdown-item>
               <el-dropdown-item divided command="delete" class="danger-item">
                 <el-icon><Delete /></el-icon>
                 <span>删除配置</span>
@@ -108,7 +100,6 @@ import {
   Edit, 
   Delete, 
   DocumentCopy, 
-  CircleClose, 
   FolderOpened,
   VideoPlay,
   TopRight,
@@ -128,7 +119,6 @@ const emit = defineEmits<{
   edit: [profile: Profile];
   backup: [profile: Profile];
   delete: [profile: Profile];
-  kill: [profile: Profile];
   openDir: [profile: Profile];
 }>();
 
@@ -170,9 +160,6 @@ const handleCommand = (command: string) => {
       break;
     case 'openDir':
       emit('openDir', props.profile);
-      break;
-    case 'kill':
-      emit('kill', props.profile);
       break;
     case 'delete':
       emit('delete', props.profile);

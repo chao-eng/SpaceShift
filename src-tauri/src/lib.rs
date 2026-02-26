@@ -5,14 +5,12 @@ use tauri::{AppHandle, Manager, State};
 mod db;
 mod chrome;
 mod profile_manager;
-mod browser_killer;
 mod network_optimizer;
 mod performance_monitor;
 
 use db::{Database, Profile, Backup};
 use chrome::{ChromeManager, ChromeLaunchResult};
 use profile_manager::{ProfileManager, BackupResult, RestoreResult};
-use browser_killer::{BrowserKiller, BrowserType, KillBrowserResult, BrowserSafetyCheck, BrowserProcess};
 
 struct AppState {
     db: Mutex<Database>,
@@ -91,21 +89,6 @@ fn launch_chrome(
 
     let profile_dir = PathBuf::from(&profile.data_dir_path);
 
-    // Check if Chrome is already running for this profile
-    if state.chrome_manager.is_chrome_running(&id, Some(&profile_dir)) {
-        if let Some(pid) = profile.pid {
-            let _ = state.chrome_manager.bring_to_front(pid as u32);
-            // Update last_opened_at timestamp even when bringing to front
-            db.update_profile_status(&id, true, Some(pid as i32))
-                .map_err(|e| e.to_string())?;
-            return Ok(ChromeLaunchResult {
-                success: true,
-                pid: Some(pid as u32),
-                error: None,
-            });
-        }
-    }
-
     let result = state.chrome_manager.launch_chrome(&id, &profile_dir, url.as_deref());
 
     if result.success {
@@ -114,39 +97,6 @@ fn launch_chrome(
     }
 
     Ok(result)
-}
-
-#[tauri::command]
-fn bring_chrome_to_front(id: String, state: State<AppState>) -> Result<bool, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    
-    if let Ok(Some(profile)) = db.get_profile_by_id(&id) {
-        if let Some(pid) = profile.pid {
-            match state.chrome_manager.bring_to_front(pid as u32) {
-                Ok(_) => return Ok(true),
-                Err(e) => return Err(e),
-            }
-        }
-    }
-    
-    Ok(false)
-}
-
-#[tauri::command]
-fn check_chrome_status(id: String, state: State<AppState>) -> Result<bool, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-
-    // Get profile directory for accurate process detection
-    let user_data_dir = db.get_profile_by_id(&id)
-        .ok()
-        .flatten()
-        .map(|p| PathBuf::from(&p.data_dir_path));
-
-    let is_running = state.chrome_manager.is_chrome_running(&id, user_data_dir.as_ref());
-
-    let _ = db.update_profile_status(&id, is_running, None);
-
-    Ok(is_running)
 }
 
 #[tauri::command]
@@ -288,46 +238,6 @@ fn open_profile_directory(profile_data_dir: String) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
-fn detect_browser_processes() -> Result<Vec<BrowserProcess>, String> {
-    let killer = BrowserKiller::new();
-    Ok(killer.detect_browser_processes())
-}
-
-#[tauri::command]
-fn safety_check_browser_kill() -> Result<BrowserSafetyCheck, String> {
-    let killer = BrowserKiller::new();
-    let processes = killer.detect_browser_processes();
-    Ok(killer.safety_check(&processes))
-}
-
-#[tauri::command]
-fn kill_browser_by_profile(profile_data_dir: String) -> Result<KillBrowserResult, String> {
-    let killer = BrowserKiller::new();
-    Ok(killer.kill_browser_by_profile(&profile_data_dir))
-}
-
-#[tauri::command]
-fn kill_browser_by_type(browser_type: String) -> Result<KillBrowserResult, String> {
-    let killer = BrowserKiller::new();
-    let btype = match browser_type.to_lowercase().as_str() {
-        "chrome" => BrowserType::Chrome,
-        "firefox" => BrowserType::Firefox,
-        "edge" => BrowserType::Edge,
-        "safari" => BrowserType::Safari,
-        "opera" => BrowserType::Opera,
-        "brave" => BrowserType::Brave,
-        _ => BrowserType::Unknown,
-    };
-    Ok(killer.kill_browsers_by_type(btype))
-}
-
-#[tauri::command]
-fn kill_all_browsers() -> Result<KillBrowserResult, String> {
-    let killer = BrowserKiller::new();
-    Ok(killer.kill_all_browsers())
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -353,8 +263,6 @@ pub fn run() {
             update_profile,
             delete_profile,
             launch_chrome,
-            bring_chrome_to_front,
-            check_chrome_status,
             backup_profile,
             restore_profile,
             get_backups,
@@ -364,11 +272,6 @@ pub fn run() {
             get_profile_size,
             get_app_data_dir,
             open_profile_directory,
-            detect_browser_processes,
-            safety_check_browser_kill,
-            kill_browser_by_profile,
-            kill_browser_by_type,
-            kill_all_browsers,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

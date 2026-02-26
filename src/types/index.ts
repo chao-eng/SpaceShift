@@ -39,27 +39,3 @@ export interface RestoreResult {
 }
 
 export type ViewMode = 'grid' | 'list';
-
-export type BrowserType = 'chrome' | 'firefox' | 'edge' | 'safari' | 'opera' | 'brave' | 'unknown';
-
-export interface BrowserProcess {
-  pid: number;
-  name: string;
-  browser_type: BrowserType;
-  command?: string;
-  user_data_dir?: string;
-}
-
-export interface KillBrowserResult {
-  success: boolean;
-  killed_count: number;
-  failed_pids: number[];
-  message: string;
-}
-
-export interface BrowserSafetyCheck {
-  is_safe_to_kill: boolean;
-  warnings: string[];
-  browser_type: BrowserType;
-  process_count: number;
-}

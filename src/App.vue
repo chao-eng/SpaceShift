@@ -76,7 +76,6 @@
           @edit="handleEdit"
           @backup="handleBackup"
           @delete="handleDelete"
-          @kill="handleKill"
           @openDir="handleOpenDir"
         />
       </div>
@@ -94,14 +93,6 @@
       :profile="selectedProfile"
       @success="loadProfiles"
     />
-
-    <KillBrowserDialog
-      v-model="showKillDialog"
-      :profile-data-dir="selectedProfile?.data_dir_path"
-      mode="profile"
-      @success="handleKillSuccess"
-      @error="handleKillError"
-    />
   </div>
 </template>
 
@@ -118,8 +109,7 @@ import {
 import ProfileCard from './components/ProfileCard.vue';
 import ProfileForm from './components/ProfileForm.vue';
 import BackupDialog from './components/BackupDialog.vue';
-import KillBrowserDialog from './components/KillBrowserDialog.vue';
-import type { Profile, ViewMode, KillBrowserResult } from './types';
+import type { Profile, ViewMode } from './types';
 import { api } from './api';
 
 const profiles = ref<Profile[]>([]);
@@ -128,26 +118,10 @@ const searchQuery = ref('');
 const viewMode = ref<ViewMode>('grid');
 const showForm = ref(false);
 const showBackupDialog = ref(false);
-const showKillDialog = ref(false);
 const editingProfile = ref<Profile | null>(null);
 const selectedProfile = ref<Profile | null>(null);
 
-// Track launching state for each profile to prevent duplicate clicks
 const launchingProfiles = ref<Set<string>>(new Set());
-
-const handleKill = (profile: Profile) => {
-  selectedProfile.value = profile;
-  showKillDialog.value = true;
-};
-
-const handleKillSuccess = async (result: KillBrowserResult) => {
-  ElMessage.success(result.message);
-  await loadProfiles();
-};
-
-const handleKillError = (error: string) => {
-  ElMessage.error(error);
-};
 
 const handleOpenDir = async (profile: Profile) => {
   try {
@@ -207,41 +181,16 @@ const handleCardClick = (_profile: Profile) => {
 };
 
 const handleLaunch = async (profile: Profile) => {
-  // Prevent duplicate clicks
   if (launchingProfiles.value.has(profile.id)) {
     return;
   }
 
-  // If already running, just bring to front without changing state
-  if (profile.is_running) {
-    try {
-      launchingProfiles.value.add(profile.id);
-      const result = await api.launchChrome(profile.id);
-
-      if (result.success) {
-        ElMessage.success(`已切换到: ${profile.name}`);
-        // Refresh to update last_opened_at timestamp
-        await loadProfiles();
-      } else {
-        ElMessage.error(result.error || '操作失败');
-      }
-    } catch (error) {
-      ElMessage.error('操作失败');
-      console.error(error);
-    } finally {
-      launchingProfiles.value.delete(profile.id);
-    }
-    return;
-  }
-
-  // Normal launch flow
   try {
     launchingProfiles.value.add(profile.id);
     const result = await api.launchChrome(profile.id);
 
     if (result.success) {
       ElMessage.success(`已启动: ${profile.name}`);
-      // Optimistically update the profile state before reloading
       const profileIndex = profiles.value.findIndex(p => p.id === profile.id);
       if (profileIndex !== -1) {
         profiles.value[profileIndex].is_running = true;
@@ -295,19 +244,6 @@ const handleDelete = async (profile: Profile) => {
 
 onMounted(() => {
   loadProfiles();
-
-  // Periodically check Chrome status
-  setInterval(async () => {
-    for (const profile of profiles.value) {
-      if (profile.is_running) {
-        const isRunning = await api.checkChromeStatus(profile.id);
-        if (isRunning !== profile.is_running) {
-          await loadProfiles();
-          break;
-        }
-      }
-    }
-  }, 5000);
 });
 </script>
 

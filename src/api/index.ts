@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { Profile, Backup, ChromeLaunchResult, BackupResult, RestoreResult, BrowserProcess, BrowserSafetyCheck, KillBrowserResult, BrowserType } from '../types';
+import type { Profile, Backup, ChromeLaunchResult, BackupResult, RestoreResult } from '../types';
 
 export const api = {
   // Profile operations
@@ -18,12 +18,6 @@ export const api = {
   // Chrome operations
   launchChrome: (id: string, url?: string): Promise<ChromeLaunchResult> => 
     invoke('launch_chrome', { id, url }),
-  
-  bringChromeToFront: (id: string): Promise<boolean> => 
-    invoke('bring_chrome_to_front', { id }),
-  
-  checkChromeStatus: (id: string): Promise<boolean> => 
-    invoke('check_chrome_status', { id }),
   
   // Backup operations
   backupProfile: (id: string, backupDir: string): Promise<BackupResult> => 
@@ -49,17 +43,4 @@ export const api = {
   
   openProfileDirectory: (profileDataDir: string): Promise<void> => 
     invoke('open_profile_directory', { profileDataDir }),
-  
-  // Browser killer operations
-  detectBrowserProcesses: (): Promise<BrowserProcess[]> => invoke('detect_browser_processes'),
-  
-  safetyCheckBrowserKill: (): Promise<BrowserSafetyCheck> => invoke('safety_check_browser_kill'),
-  
-  killBrowserByProfile: (profileDataDir: string): Promise<KillBrowserResult> => 
-    invoke('kill_browser_by_profile', { profileDataDir }),
-  
-  killBrowserByType: (browserType: BrowserType): Promise<KillBrowserResult> => 
-    invoke('kill_browser_by_type', { browserType }),
-  
-  killAllBrowsers: (): Promise<KillBrowserResult> => invoke('kill_all_browsers'),
 };
