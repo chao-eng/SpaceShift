@@ -1,7 +1,7 @@
 <template>
   <div
     class="profile-card"
-    :class="{ 'is-running': profile.is_running, 'is-launching': props.isLaunching }"
+    :class="{ 'is-launching': props.isLaunching }"
     @click="$emit('click', profile)"
   >
     <!-- 状态指示条 -->
@@ -13,10 +13,6 @@
         <div class="profile-avatar">
           <img v-if="profile.icon_base64" :src="profile.icon_base64" :alt="profile.name" />
           <el-icon v-else class="avatar-icon"><UserFilled /></el-icon>
-        </div>
-        <!-- 运行状态指示器 -->
-        <div v-if="profile.is_running" class="running-badge">
-          <span class="running-dot"></span>
         </div>
       </div>
       
@@ -47,17 +43,16 @@
       <!-- 操作区域 -->
       <div class="profile-actions">
         <el-tooltip
-          :content="profile.is_running ? '切换到该配置' : '启动浏览器'"
+          content="启动浏览器"
           placement="top"
           :show-after="300"
         >
           <button
-            :class="['action-btn', 'launch-btn', { 'is-running': profile.is_running, 'is-loading': props.isLaunching }]"
+            :class="['action-btn', 'launch-btn', { 'is-loading': props.isLaunching }]"
             @click.stop="handleLaunch"
             :disabled="props.isLaunching"
           >
             <el-icon v-if="props.isLaunching" class="loading-icon"><Loading /></el-icon>
-            <el-icon v-else-if="profile.is_running"><TopRight /></el-icon>
             <el-icon v-else><VideoPlay /></el-icon>
           </button>
         </el-tooltip>
@@ -102,7 +97,6 @@ import {
   DocumentCopy, 
   FolderOpened,
   VideoPlay,
-  TopRight,
   MoreFilled,
   Loading
 } from '@element-plus/icons-vue';
@@ -194,32 +188,6 @@ const handleCommand = (command: string) => {
     box-shadow: var(--shadow-sm);
   }
 
-  // 运行中状态
-  &.is-running {
-    border-color: var(--success-200);
-    background: linear-gradient(135deg, var(--success-50) 0%, var(--bg-primary) 100%);
-
-    .status-bar {
-      background: var(--success-500);
-      opacity: 1;
-    }
-
-    .running-badge {
-      display: flex;
-    }
-
-    .launch-btn {
-      background: var(--success-50);
-      color: var(--success-600);
-      border-color: var(--success-200);
-
-      &:hover {
-        background: var(--success-100);
-        border-color: var(--success-300);
-      }
-    }
-  }
-
   // 启动中状态
   &.is-launching {
     pointer-events: none;
@@ -280,39 +248,6 @@ const handleCommand = (command: string) => {
   .avatar-icon {
     font-size: 24px;
     color: var(--gray-400);
-  }
-}
-
-// 运行状态徽章
-.running-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
-  background: var(--bg-primary);
-  border-radius: var(--radius-full);
-  display: none;
-  align-items: center;
-  justify-content: center;
-
-  .running-dot {
-    width: 10px;
-    height: 10px;
-    background: var(--success-500);
-    border-radius: var(--radius-full);
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(0.9);
   }
 }
 
@@ -434,17 +369,6 @@ const handleCommand = (command: string) => {
     background: var(--primary-700);
   }
 
-  &.is-running {
-    background: var(--success-50);
-    color: var(--success-600);
-    border-color: var(--success-200);
-
-    &:hover {
-      background: var(--success-100);
-      border-color: var(--success-300);
-    }
-  }
-
   &.is-loading {
     background: var(--primary-50);
     color: var(--primary-500);
@@ -552,16 +476,6 @@ const handleCommand = (command: string) => {
 
     .avatar-icon {
       font-size: 20px;
-    }
-  }
-
-  .running-badge {
-    width: 14px;
-    height: 14px;
-
-    .running-dot {
-      width: 8px;
-      height: 8px;
     }
   }
 

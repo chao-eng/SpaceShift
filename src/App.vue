@@ -191,12 +191,6 @@ const handleLaunch = async (profile: Profile) => {
 
     if (result.success) {
       ElMessage.success(`已启动: ${profile.name}`);
-      const profileIndex = profiles.value.findIndex(p => p.id === profile.id);
-      if (profileIndex !== -1) {
-        profiles.value[profileIndex].is_running = true;
-        profiles.value[profileIndex].pid = result.pid ? Number(result.pid) : undefined;
-        profiles.value[profileIndex].last_opened_at = new Date().toISOString();
-      }
       await loadProfiles();
     } else {
       ElMessage.error(result.error || '启动失败');
