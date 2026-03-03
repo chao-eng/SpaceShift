@@ -21,6 +21,15 @@
         />
       </el-form-item>
 
+      <el-form-item label="Chrome 路径 (可选)" prop="chrome_path">
+        <el-input
+          v-model="form.chrome_path"
+          placeholder="手动指定 Chrome 可执行文件路径 (留空使用默认)"
+          clearable
+        />
+        <div class="form-tip">留空将自动查找系统默认安装的 Chrome</div>
+      </el-form-item>
+
       <el-form-item label="图标">
         <div class="icon-selector">
           <div class="current-icon" @click="triggerFileInput">
@@ -101,6 +110,7 @@ const isSubmitting = ref(false);
 
 const form = ref({
   name: '',
+  chrome_path: '',
   icon_base64: '',
   tags: '',
 });
@@ -120,6 +130,7 @@ watch(
     if (profile) {
       form.value = {
         name: profile.name,
+        chrome_path: profile.chrome_path || '',
         icon_base64: profile.icon_base64 || '',
         tags: profile.tags || '',
       };
@@ -127,6 +138,7 @@ watch(
     } else {
       form.value = {
         name: '',
+        chrome_path: '',
         icon_base64: '',
         tags: '',
       };
@@ -174,6 +186,7 @@ const handleSubmit = async () => {
       await api.updateProfile(
         props.profile.id,
         form.value.name,
+        form.value.chrome_path || undefined,
         form.value.icon_base64 || undefined,
         tags || undefined
       );
@@ -181,6 +194,7 @@ const handleSubmit = async () => {
     } else {
       await api.createProfile(
         form.value.name,
+        form.value.chrome_path || undefined,
         form.value.icon_base64 || undefined,
         tags || undefined
       );
@@ -338,5 +352,11 @@ const handleSubmit = async () => {
     border-radius: var(--radius-lg);
     font-weight: var(--font-medium);
   }
+}
+
+.form-tip {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
 }
 </style>

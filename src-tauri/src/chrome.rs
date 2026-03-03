@@ -18,12 +18,41 @@ impl ChromeManager {
         ChromeManager
     }
 
-    pub fn launch_chrome(&self, _profile_id: &str, user_data_dir: &PathBuf, url: Option<&str>) -> ChromeLaunchResult {
-        let mut cmd = Command::new("open");
-        cmd.arg("-n");
-        cmd.arg("-a");
-        cmd.arg("Google Chrome");
-        cmd.arg("--args");
+    pub fn launch_chrome(&self, _profile_id: &str, user_data_dir: &PathBuf, chrome_path: Option<&str>, url: Option<&str>) -> ChromeLaunchResult {
+        let mut cmd = if let Some(path) = chrome_path {
+            Command::new(path)
+        } else {
+            #[cfg(target_os = "macos")]
+            {
+                let mut c = Command::new("open");
+                c.arg("-n");
+                c.arg("-a");
+                c.arg("Google Chrome");
+                c.arg("--args");
+                c
+            }
+            #[cfg(target_os = "windows")]
+            {
+                // Typical Windows paths for Chrome
+                let paths = vec![
+                    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+                ];
+                let mut found_path = "chrome.exe".to_string(); // Fallback to PATH
+                for p in paths {
+                    if std::path::Path::new(p).exists() {
+                        found_path = p.to_string();
+                        break;
+                    }
+                }
+                Command::new(found_path)
+            }
+            #[cfg(target_os = "linux")]
+            {
+                Command::new("google-chrome")
+            }
+        };
+
         cmd.arg(format!("--user-data-dir={}", user_data_dir.display()));
         
         let optimized_args = NetworkOptimizer::get_optimized_args();
