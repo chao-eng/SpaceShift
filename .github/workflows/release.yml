@@ -18,7 +18,7 @@ jobs:
         include:
           - platform: "macos-latest" # For Apple Silicon (ARM64)
             args: "--target aarch64-apple-darwin"
-          - platform: "macos-13" # For Intel (X86_64)
+          - platform: "macos-12" # For Intel (X86_64)
             args: "--target x86_64-apple-darwin"
           - platform: "windows-latest" # For Windows (X64)
             args: ""
@@ -36,7 +36,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows/linux builds
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-12' && 'x86_64-apple-darwin' || '' }}
 
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-latest'
