@@ -106,6 +106,7 @@ import {
   List,
   Plus,
 } from '@element-plus/icons-vue';
+import { listen } from '@tauri-apps/api/event';
 import ProfileCard from './components/ProfileCard.vue';
 import ProfileForm from './components/ProfileForm.vue';
 import BackupDialog from './components/BackupDialog.vue';
@@ -236,8 +237,17 @@ const handleDelete = async (profile: Profile) => {
   }
 };
 
-onMounted(() => {
-  loadProfiles();
+onMounted(async () => {
+  await loadProfiles();
+
+  // Listen for browser status updates from the backend
+  await listen('browser-status-update', (event: any) => {
+    const { id, is_running } = event.payload;
+    const profile = profiles.value.find(p => p.id === id);
+    if (profile) {
+      profile.is_running = is_running;
+    }
+  });
 });
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <div
     class="profile-card"
-    :class="{ 'is-launching': props.isLaunching }"
+    :class="{ 'is-launching': props.isLaunching, 'is-running': profile.is_running }"
     @click="$emit('click', profile)"
   >
     <!-- 状态指示条 -->
@@ -29,7 +29,11 @@
           </span>
         </div>
         <div class="profile-meta">
-          <span v-if="profile.last_opened_at" class="last-opened">
+          <span v-if="profile.is_running" class="status-tag running">
+            <span class="status-dot"></span>
+            运行中
+          </span>
+          <span v-else-if="profile.last_opened_at" class="last-opened">
             <el-icon><Timer /></el-icon>
             <span>{{ formatDate(profile.last_opened_at) }}</span>
           </span>
@@ -198,6 +202,15 @@ const handleCommand = (command: string) => {
       color: var(--primary-500);
     }
   }
+
+  // 运行中状态
+  &.is-running {
+    border-color: var(--primary-400);
+    
+    .status-bar {
+      opacity: 1;
+    }
+  }
 }
 
 // 顶部状态条
@@ -210,6 +223,34 @@ const handleCommand = (command: string) => {
   background: var(--primary-500);
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+// 状态标签
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: var(--font-medium);
+  
+  &.running {
+    color: var(--primary-600);
+    
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary-500);
+      box-shadow: 0 0 4px var(--primary-300);
+      animation: pulse 2s infinite;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--primary-500-rgb, 0, 100, 250), 0.4); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(var(--primary-500-rgb, 0, 100, 250), 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--primary-500-rgb, 0, 100, 250), 0); }
 }
 
 // 卡片内容

@@ -7,13 +7,16 @@ mod chrome;
 mod profile_manager;
 mod network_optimizer;
 mod performance_monitor;
+mod browser_monitor;
 
 use db::{Database, Profile, Backup};
 use chrome::{ChromeManager, ChromeLaunchResult};
 use profile_manager::{ProfileManager, BackupResult, RestoreResult};
+use browser_monitor::BrowserMonitor;
+use std::sync::Arc;
 
 struct AppState {
-    db: Mutex<Database>,
+    db: Arc<Mutex<Database>>,
     chrome_manager: ChromeManager,
 }
 
@@ -258,11 +261,16 @@ pub fn run() {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
             
-            let db = Database::new(&app_data_dir)?;
+            let db = Arc::new(Mutex::new(Database::new(&app_data_dir)?));
             let chrome_manager = ChromeManager::new();
             
+            let monitor_db = db.clone();
+            let app_handle = app.handle().clone();
+            let monitor = BrowserMonitor::new(monitor_db, app_handle);
+            monitor.start_monitoring();
+            
             app.manage(AppState {
-                db: Mutex::new(db),
+                db,
                 chrome_manager,
             });
             
