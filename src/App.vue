@@ -5,7 +5,7 @@
       <div class="header-left">
         <div class="brand">
           <div class="brand-icon">
-            <el-icon><ChromeFilled /></el-icon>
+            <img src="./assets/logo.svg" alt="SpaceShift logo" class="logo-image" />
           </div>
           <div class="brand-text">
             <h1 class="brand-title">SpaceShift</h1>
@@ -109,7 +109,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
-  ChromeFilled,
   Search,
   Grid,
   List,
@@ -303,16 +302,26 @@ onMounted(async () => {
   gap: var(--space-3);
 
   &-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 20px;
-    box-shadow: var(--shadow-sm);
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+    }
+
+    .logo-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
   }
 
   &-text {
