@@ -6,13 +6,44 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# 显式声明全局权限，确保包含所有必要权限
 permissions:
   contents: write
+  actions: write
+  discussions: write
 
 jobs:
+  # 第一阶段：创建一个统一的 Release 页面（草案形式）
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: get version
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: create release
+        id: create-release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v${{ steps.get_version.outputs.version }}
+          releaseName: "SpaceShift v${{ steps.get_version.outputs.version }}"
+          releaseBody: "SpaceShift 跨平台正式版本发布（自动编译）。"
+          releaseDraft: true # 先作为草稿创建，防止并发任务冲突
+          prerelease: false
+
+  # 第二阶段：并行执行各平台的打包并上传到上面创建好的 Release
   publish-tauri:
-    permissions:
-      contents: write
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -30,26 +61,16 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
-
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
       - name: install frontend dependencies
         run: npm install
-
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -57,7 +78,22 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: "SpaceShift v__VERSION__"
-          releaseBody: "SpaceShift 跨平台正式版本发布。"
-          releaseDraft: false
-          prerelease: false
+          # 关键点：这里仅仅上传文件，而不尝试重新创建 Release 分页
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
+
+  # 第三阶段：所有文件上传完成后，自动将 Release 从“草稿”转为“发布”
+  publish-release:
+    needs: [create-release, publish-tauri]
+    runs-on: ubuntu-latest
+    steps:
+      - name: publish release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: "${{ needs.create-release.outputs.release_id }}",
+              draft: false
+            })
