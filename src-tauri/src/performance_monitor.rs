@@ -216,6 +216,7 @@ impl PerformanceOptimizer {
     
     /// Get optimal Chrome flags based on system analysis
     pub fn get_optimal_flags() -> Vec<String> {
+        #[allow(unused_mut)]
         let mut flags = vec![
             "--disable-extensions".to_string(),
             "--disable-ipv6".to_string(),

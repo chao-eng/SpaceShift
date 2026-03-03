@@ -260,6 +260,25 @@ impl Database {
         backups.collect()
     }
 
+    pub fn get_backup_by_id(&self, id: &str) -> SqliteResult<Option<Backup>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, backup_path, created_at, size_bytes 
+             FROM backups WHERE id = ?1"
+        )?;
+
+        let mut rows = stmt.query_map([id], |row| {
+            Ok(Backup {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                backup_path: row.get(2)?,
+                created_at: row.get(3)?,
+                size_bytes: row.get(4)?,
+            })
+        })?;
+
+        rows.next().transpose()
+    }
+
     pub fn delete_backup(&self, id: &str) -> SqliteResult<bool> {
         self.conn.execute("DELETE FROM backups WHERE id = ?1", [id])?;
         Ok(self.conn.changes() > 0)

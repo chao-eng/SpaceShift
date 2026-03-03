@@ -107,62 +107,58 @@ fn launch_chrome(
 }
 
 #[tauri::command]
-fn backup_profile(
+async fn backup_profile(
     id: String,
     backup_dir: String,
-    state: State<AppState>,
+    state: State<'_, AppState>,
 ) -> Result<BackupResult, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let (profile_dir, profile_name) = {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        let profile = db.get_profile_by_id(&id)
+            .map_err(|e| e.to_string())?
+            .ok_or("Profile not found")?;
+        (PathBuf::from(&profile.data_dir_path), profile.name.clone())
+    };
     
-    let profile = db.get_profile_by_id(&id)
-        .map_err(|e| e.to_string())?;
+    let backup_path = PathBuf::from(&backup_dir);
     
-    if let Some(profile) = profile {
-        let profile_dir = PathBuf::from(&profile.data_dir_path);
-        let backup_path = PathBuf::from(&backup_dir);
-        
-        let result = ProfileManager::backup_profile(&profile_dir, &backup_path, &profile.name);
-        
-        if result.success {
-            if let Some(ref backup_file_path) = result.backup_path {
-                let _ = db.create_backup(&id, backup_file_path, result.size_bytes);
-            }
+    // Perform heavy backup operation in a blocking thread to keep the async executor free
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        ProfileManager::backup_profile(&profile_dir, &backup_path, &profile_name)
+    }).await.map_err(|e| e.to_string())?;
+    
+    if result.success {
+        if let Some(ref backup_file_path) = result.backup_path {
+            let db = state.db.lock().map_err(|e| e.to_string())?;
+            let _ = db.create_backup(&id, backup_file_path, result.size_bytes);
         }
-        
-        Ok(result)
-    } else {
-        Ok(BackupResult {
-            success: false,
-            backup_path: None,
-            size_bytes: 0,
-            error: Some("Profile not found".to_string()),
-        })
     }
+    
+    Ok(result)
 }
 
 #[tauri::command]
-fn restore_profile(
+async fn restore_profile(
     id: String,
     backup_path: String,
-    state: State<AppState>,
+    state: State<'_, AppState>,
 ) -> Result<RestoreResult, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let target_dir = {
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        let profile = db.get_profile_by_id(&id)
+            .map_err(|e| e.to_string())?
+            .ok_or("Profile not found")?;
+        PathBuf::from(&profile.data_dir_path)
+    };
     
-    let profile = db.get_profile_by_id(&id)
-        .map_err(|e| e.to_string())?;
+    let backup_file = PathBuf::from(&backup_path);
     
-    if let Some(profile) = profile {
-        let backup_file = PathBuf::from(&backup_path);
-        let target_dir = PathBuf::from(&profile.data_dir_path);
-        
-        let result = ProfileManager::restore_profile(&backup_file, &target_dir);
-        Ok(result)
-    } else {
-        Ok(RestoreResult {
-            success: false,
-            error: Some("Profile not found".to_string()),
-        })
-    }
+    // Perform heavy restore operation in a blocking thread
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        ProfileManager::restore_profile(&backup_file, &target_dir)
+    }).await.map_err(|e| e.to_string())?;
+    
+    Ok(result)
 }
 
 #[tauri::command]
@@ -174,6 +170,15 @@ fn get_backups(id: String, state: State<AppState>) -> Result<Vec<Backup>, String
 #[tauri::command]
 fn delete_backup(id: String, state: State<AppState>) -> Result<bool, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
+    
+    // Fetch backup info to get the file path first
+    if let Ok(Some(backup)) = db.get_backup_by_id(&id) {
+        let path = PathBuf::from(&backup.backup_path);
+        if path.exists() {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+    
     db.delete_backup(&id).map_err(|e| e.to_string())
 }
 

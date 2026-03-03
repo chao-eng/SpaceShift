@@ -5,55 +5,61 @@
     width="600px"
     destroy-on-close
   >
-    <div class="backup-actions">
-      <el-button type="primary" @click="handleBackup" :loading="isBackingUp">
-        <el-icon><DocumentCopy /></el-icon>
-        立即备份
-      </el-button>
-    </div>
+    <div v-loading="isBackingUp" element-loading-text="正在打包配置文件，请稍候..." class="backup-container">
+      <div class="backup-actions">
+        <el-button @click="handleOpenBackupDir">
+          <el-icon><FolderOpened /></el-icon>
+          查看目录
+        </el-button>
+        <el-button type="primary" @click="handleBackup" :loading="isBackingUp">
+          <el-icon><DocumentCopy /></el-icon>
+          {{ isBackingUp ? '正在备份...' : '立即备份' }}
+        </el-button>
+      </div>
 
-    <el-divider />
+      <el-divider />
 
-    <div class="backup-list">
-      <el-empty v-if="backups.length === 0" description="暂无备份" />
-      
-      <el-timeline v-else>
-        <el-timeline-item
-          v-for="backup in backups"
-          :key="backup.id"
-          :timestamp="formatDate(backup.created_at)"
-          placement="top"
-        >
-          <el-card>
-            <div class="backup-item">
-              <div class="backup-info">
-                <el-icon class="backup-icon"><Document /></el-icon>
-                <div class="backup-details">
-                  <span class="backup-name">{{ getBackupName(backup.backup_path) }}</span>
-                  <span class="backup-size">{{ formatSize(backup.size_bytes) }}</span>
+      <div class="backup-list">
+        <el-empty v-if="backups.length === 0" description="暂无备份" />
+        
+        <el-timeline v-else>
+          <el-timeline-item
+            v-for="backup in backups"
+            :key="backup.id"
+            :timestamp="formatDate(backup.created_at)"
+            placement="top"
+          >
+            <el-card>
+              <div class="backup-item">
+                <div class="backup-info">
+                  <el-icon class="backup-icon"><Document /></el-icon>
+                  <div class="backup-details">
+                    <span class="backup-name">{{ getBackupName(backup.backup_path) }}</span>
+                    <span class="backup-size">{{ formatSize(backup.size_bytes) }}</span>
+                  </div>
+                </div>
+                <div class="backup-actions-right">
+                  <el-button
+                    type="primary"
+                    link
+                    @click="handleRestore(backup)"
+                    :loading="restoringId === backup.id"
+                  >
+                    恢复
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    link
+                    @click="handleDelete(backup)"
+                  >
+                    删除
+                  </el-button>
                 </div>
               </div>
-              <div class="backup-actions-right">
-                <el-button
-                  type="primary"
-                  link
-                  @click="handleRestore(backup)"
-                  :loading="restoringId === backup.id"
-                >
-                  恢复
-                </el-button>
-                <el-button
-                  type="danger"
-                  link
-                  @click="handleDelete(backup)"
-                >
-                  删除
-                </el-button>
-              </div>
-            </div>
-          </el-card>
-        </el-timeline-item>
-      </el-timeline>
+            </el-card>
+          </el-timeline-item>
+        </el-timeline>
+      </div>
     </div>
   </el-dialog>
 </template>
@@ -61,9 +67,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { DocumentCopy, Document } from '@element-plus/icons-vue';
+import { DocumentCopy, Document, FolderOpened } from '@element-plus/icons-vue';
 import type { Profile, Backup } from '../types';
 import { api } from '../api';
+import { homeDir, join } from '@tauri-apps/api/path';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -151,8 +158,18 @@ const handleBackup = async () => {
 };
 
 const getDefaultBackupDir = async (): Promise<string> => {
-  // For simplicity, use home directory + SpaceShift/Backups
-  return `${navigator.userAgent.includes('Win') ? '%USERPROFILE%' : '~'}/SpaceShift/Backups`;
+  const home = await homeDir();
+  return await join(home, 'SpaceShift', 'Backups');
+};
+
+const handleOpenBackupDir = async () => {
+  try {
+    const backupDir = await getDefaultBackupDir();
+    await api.openProfileDirectory(backupDir);
+  } catch (error) {
+    ElMessage.error('无法打开目录');
+    console.error(error);
+  }
 };
 
 const handleRestore = async (backup: Backup) => {

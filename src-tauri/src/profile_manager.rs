@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{self, Write};
+use std::io;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 use zip::write::SimpleFileOptions;
@@ -94,12 +94,14 @@ impl ProfileManager {
             }
         };
 
-        let mut zip = ZipWriter::new(file);
+        let buf_writer = io::BufWriter::new(file);
+        let mut zip = ZipWriter::new(buf_writer);
         let options = SimpleFileOptions::default()
             .compression_method(zip::CompressionMethod::Deflated)
             .unix_permissions(0o755);
 
         let mut total_size: i64 = 0;
+        let excluded_dirs = ["Cache", "Code Cache", "GPUCache", "Service Worker", "CacheStorage"];
 
         for entry in WalkDir::new(profile_dir) {
             match entry {
@@ -108,35 +110,40 @@ impl ProfileManager {
                     let name = path.strip_prefix(profile_dir).unwrap_or(path);
                     let name_str = name.to_string_lossy();
 
+                    // Skip common large cache directories
+                    if path.is_dir() && excluded_dirs.iter().any(|&d| name_str.contains(d)) {
+                        continue;
+                    }
+
                     if path.is_file() {
-                        match fs::read(path) {
-                            Ok(contents) => {
-                                total_size += contents.len() as i64;
-                                if let Err(e) = zip.start_file(name_str.as_ref(), options) {
-                                    return BackupResult {
-                                        success: false,
-                                        backup_path: None,
-                                        size_bytes: 0,
-                                        error: Some(format!("Failed to add file to zip: {}", e)),
-                                    };
-                                }
-                                if let Err(e) = zip.write_all(&contents) {
-                                    return BackupResult {
-                                        success: false,
-                                        backup_path: None,
-                                        size_bytes: 0,
-                                        error: Some(format!("Failed to write file contents: {}", e)),
-                                    };
-                                }
-                            }
-                            Err(e) => {
-                                return BackupResult {
-                                    success: false,
-                                    backup_path: None,
-                                    size_bytes: 0,
-                                    error: Some(format!("Failed to read file: {}", e)),
-                                };
-                            }
+                        let mut f = match fs::File::open(path) {
+                            Ok(f) => f,
+                            Err(_) => continue, // Skip files that can't be opened (e.g. in use)
+                        };
+
+                        let metadata = match entry.metadata() {
+                            Ok(m) => m,
+                            Err(_) => continue,
+                        };
+
+                        total_size += metadata.len() as i64;
+                        
+                        if let Err(e) = zip.start_file(name_str.as_ref(), options) {
+                            return BackupResult {
+                                success: false,
+                                backup_path: None,
+                                size_bytes: 0,
+                                error: Some(format!("Failed to add file to zip: {}", e)),
+                            };
+                        }
+
+                        if let Err(e) = io::copy(&mut f, &mut zip) {
+                            return BackupResult {
+                                success: false,
+                                backup_path: None,
+                                size_bytes: 0,
+                                error: Some(format!("Failed to write file contents: {}", e)),
+                            };
                         }
                     } else if path.is_dir() && !name_str.is_empty() {
                         let dir_name = format!("{}/", name_str);
