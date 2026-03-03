@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish-tauri:
     permissions:
@@ -45,13 +48,14 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: build tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
+          tagName: v__VERSION__
           releaseName: "SpaceShift v__VERSION__"
-          releaseBody: "See the assets below to download the latest version of SpaceShift."
+          releaseBody: "SpaceShift 跨平台正式版本发布。"
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
