@@ -339,6 +339,10 @@ const handleCommand = (command: string) => {
 .profile-meta {
   font-size: 12px;
   color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
 }
 
 .last-opened {
@@ -356,14 +360,13 @@ const handleCommand = (command: string) => {
 }
 
 .homepage-indicator {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  margin-left: var(--space-2);
+  margin-left: var(--space-1);
   color: var(--primary-400);
-  vertical-align: middle;
   
   .el-icon {
-    font-size: 13px;
+    font-size: 14px;
     cursor: help;
   }
 }
