@@ -36,6 +36,7 @@ fn get_profile(id: String, state: State<AppState>) -> Result<Option<Profile>, St
 fn create_profile(
     name: String,
     chrome_path: Option<String>,
+    homepage: Option<String>,
     icon_base64: Option<String>,
     tags: Option<String>,
     app_handle: AppHandle,
@@ -50,7 +51,7 @@ fn create_profile(
         .map_err(|e| e.to_string())?;
     
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.create_profile(&name, &profile_dir.to_string_lossy(), chrome_path.as_deref(), icon_base64.as_deref(), tags.as_deref())
+    db.create_profile(&name, &profile_dir.to_string_lossy(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref())
         .map_err(|e| e.to_string())
 }
 
@@ -59,12 +60,13 @@ fn update_profile(
     id: String,
     name: Option<String>,
     chrome_path: Option<String>,
+    homepage: Option<String>,
     icon_base64: Option<String>,
     tags: Option<String>,
     state: State<AppState>,
 ) -> Result<bool, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.update_profile(&id, name.as_deref(), chrome_path.as_deref(), icon_base64.as_deref(), tags.as_deref())
+    db.update_profile(&id, name.as_deref(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref())
         .map_err(|e| e.to_string())
 }
 
@@ -93,12 +95,15 @@ fn launch_chrome(
         .ok_or("Profile not found")?;
 
     let profile_dir = PathBuf::from(&profile.data_dir_path);
+    
+    // Use the provided URL if available, otherwise use the profile's homepage
+    let launch_url = url.as_deref().or(profile.homepage.as_deref());
 
     let result = state.chrome_manager.launch_chrome(
         &id, 
         &profile_dir, 
         profile.chrome_path.as_deref(),
-        url.as_deref()
+        launch_url
     );
 
     if result.success {

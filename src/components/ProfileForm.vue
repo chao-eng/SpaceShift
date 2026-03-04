@@ -30,6 +30,19 @@
         <div class="form-tip">留空将自动查找系统默认安装的 Chrome</div>
       </el-form-item>
 
+      <el-form-item label="启动页面 (可选)" prop="homepage">
+        <el-input
+          v-model="form.homepage"
+          placeholder="例如: https://www.google.com"
+          clearable
+        >
+          <template #prefix>
+            <el-icon><Monitor /></el-icon>
+          </template>
+        </el-input>
+        <div class="form-tip">启动 Chrome 时自动打开的网址</div>
+      </el-form-item>
+
       <el-form-item label="图标">
         <div class="icon-selector">
           <div class="current-icon" @click="triggerFileInput">
@@ -82,7 +95,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { UserFilled, Camera } from '@element-plus/icons-vue';
+import { UserFilled, Camera, Monitor } from '@element-plus/icons-vue';
 import type { Profile } from '../types';
 import { api } from '../api';
 
@@ -111,6 +124,7 @@ const isSubmitting = ref(false);
 const form = ref({
   name: '',
   chrome_path: '',
+  homepage: '',
   icon_base64: '',
   tags: '',
 });
@@ -122,6 +136,13 @@ const rules = {
     { required: true, message: '请输入配置名称', trigger: 'blur' },
     { min: 1, max: 50, message: '名称长度在 1 到 50 个字符', trigger: 'blur' },
   ],
+  homepage: [
+    { 
+      pattern: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/, 
+      message: '请输入有效的网址 (例如: https://google.com)', 
+      trigger: 'blur' 
+    }
+  ]
 };
 
 watch(
@@ -131,6 +152,7 @@ watch(
       form.value = {
         name: profile.name,
         chrome_path: profile.chrome_path || '',
+        homepage: profile.homepage || '',
         icon_base64: profile.icon_base64 || '',
         tags: profile.tags || '',
       };
@@ -139,6 +161,7 @@ watch(
       form.value = {
         name: '',
         chrome_path: '',
+        homepage: '',
         icon_base64: '',
         tags: '',
       };
@@ -187,6 +210,7 @@ const handleSubmit = async () => {
         props.profile.id,
         form.value.name,
         form.value.chrome_path || undefined,
+        form.value.homepage || undefined,
         form.value.icon_base64 || undefined,
         tags || undefined
       );
@@ -195,6 +219,7 @@ const handleSubmit = async () => {
       await api.createProfile(
         form.value.name,
         form.value.chrome_path || undefined,
+        form.value.homepage || undefined,
         form.value.icon_base64 || undefined,
         tags || undefined
       );

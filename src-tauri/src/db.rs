@@ -10,6 +10,7 @@ pub struct Profile {
     pub name: String,
     pub data_dir_path: String,
     pub chrome_path: Option<String>,
+    pub homepage: Option<String>,
     pub icon_path: Option<String>,
     pub icon_base64: Option<String>,
     pub tags: Option<String>,
@@ -51,6 +52,7 @@ impl Database {
                 name TEXT NOT NULL,
                 data_dir_path TEXT NOT NULL UNIQUE,
                 chrome_path TEXT,
+                homepage TEXT,
                 icon_path TEXT,
                 icon_base64 TEXT,
                 tags TEXT,
@@ -87,18 +89,19 @@ impl Database {
 
         // Migrations
         let _ = self.conn.execute("ALTER TABLE profiles ADD COLUMN chrome_path TEXT", []);
+        let _ = self.conn.execute("ALTER TABLE profiles ADD COLUMN homepage TEXT", []);
 
         Ok(())
     }
 
-    pub fn create_profile(&self, name: &str, data_dir_path: &str, chrome_path: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>) -> SqliteResult<Profile> {
+    pub fn create_profile(&self, name: &str, data_dir_path: &str, chrome_path: Option<&str>, homepage: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>) -> SqliteResult<Profile> {
         let id = Uuid::new_v4().to_string();
         let now = Utc::now().to_rfc3339();
         
         self.conn.execute(
-            "INSERT INTO profiles (id, name, data_dir_path, chrome_path, icon_base64, tags, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            (&id, name, data_dir_path, chrome_path, icon_base64, tags, &now, &now),
+            "INSERT INTO profiles (id, name, data_dir_path, chrome_path, homepage, icon_base64, tags, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            (&id, name, data_dir_path, chrome_path, homepage, icon_base64, tags, &now, &now),
         )?;
 
         Ok(Profile {
@@ -106,6 +109,7 @@ impl Database {
             name: name.to_string(),
             data_dir_path: data_dir_path.to_string(),
             chrome_path: chrome_path.map(|s| s.to_string()),
+            homepage: homepage.map(|s| s.to_string()),
             icon_path: None,
             icon_base64: icon_base64.map(|s| s.to_string()),
             tags: tags.map(|s| s.to_string()),
@@ -119,7 +123,7 @@ impl Database {
 
     pub fn get_all_profiles(&self) -> SqliteResult<Vec<Profile>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, data_dir_path, chrome_path, icon_path, icon_base64, tags, 
+            "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
                     created_at, updated_at, last_opened_at, is_running, pid 
              FROM profiles ORDER BY updated_at DESC"
         )?;
@@ -130,14 +134,15 @@ impl Database {
                 name: row.get(1)?,
                 data_dir_path: row.get(2)?,
                 chrome_path: row.get(3)?,
-                icon_path: row.get(4)?,
-                icon_base64: row.get(5)?,
-                tags: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                last_opened_at: row.get(9)?,
-                is_running: row.get::<_, i32>(10)? != 0,
-                pid: row.get(11)?,
+                homepage: row.get(4)?,
+                icon_path: row.get(5)?,
+                icon_base64: row.get(6)?,
+                tags: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                last_opened_at: row.get(10)?,
+                is_running: row.get::<_, i32>(11)? != 0,
+                pid: row.get(12)?,
             })
         })?;
 
@@ -146,7 +151,7 @@ impl Database {
 
     pub fn get_profile_by_id(&self, id: &str) -> SqliteResult<Option<Profile>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, data_dir_path, chrome_path, icon_path, icon_base64, tags, 
+            "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
                     created_at, updated_at, last_opened_at, is_running, pid 
              FROM profiles WHERE id = ?1"
         )?;
@@ -157,21 +162,22 @@ impl Database {
                 name: row.get(1)?,
                 data_dir_path: row.get(2)?,
                 chrome_path: row.get(3)?,
-                icon_path: row.get(4)?,
-                icon_base64: row.get(5)?,
-                tags: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                last_opened_at: row.get(9)?,
-                is_running: row.get::<_, i32>(10)? != 0,
-                pid: row.get(11)?,
+                homepage: row.get(4)?,
+                icon_path: row.get(5)?,
+                icon_base64: row.get(6)?,
+                tags: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                last_opened_at: row.get(10)?,
+                is_running: row.get::<_, i32>(11)? != 0,
+                pid: row.get(12)?,
             })
         })?;
 
         rows.next().transpose()
     }
 
-    pub fn update_profile(&self, id: &str, name: Option<&str>, chrome_path: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>) -> SqliteResult<bool> {
+    pub fn update_profile(&self, id: &str, name: Option<&str>, chrome_path: Option<&str>, homepage: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>) -> SqliteResult<bool> {
         let now = Utc::now().to_rfc3339();
         
         if let Some(name) = name {
@@ -185,6 +191,13 @@ impl Database {
             self.conn.execute(
                 "UPDATE profiles SET chrome_path = ?1, updated_at = ?2 WHERE id = ?3",
                 (path, &now, id),
+            )?;
+        }
+
+        if let Some(url) = homepage {
+            self.conn.execute(
+                "UPDATE profiles SET homepage = ?1, updated_at = ?2 WHERE id = ?3",
+                (url, &now, id),
             )?;
         }
 
@@ -287,7 +300,7 @@ impl Database {
     pub fn search_profiles(&self, query: &str) -> SqliteResult<Vec<Profile>> {
         let search_pattern = format!("%{}%", query);
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, data_dir_path, chrome_path, icon_path, icon_base64, tags, 
+            "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
                     created_at, updated_at, last_opened_at, is_running, pid 
              FROM profiles 
              WHERE name LIKE ?1 OR tags LIKE ?1
@@ -300,14 +313,15 @@ impl Database {
                 name: row.get(1)?,
                 data_dir_path: row.get(2)?,
                 chrome_path: row.get(3)?,
-                icon_path: row.get(4)?,
-                icon_base64: row.get(5)?,
-                tags: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                last_opened_at: row.get(9)?,
-                is_running: row.get::<_, i32>(10)? != 0,
-                pid: row.get(11)?,
+                homepage: row.get(4)?,
+                icon_path: row.get(5)?,
+                icon_base64: row.get(6)?,
+                tags: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                last_opened_at: row.get(10)?,
+                is_running: row.get::<_, i32>(11)? != 0,
+                pid: row.get(12)?,
             })
         })?;
 
@@ -317,7 +331,7 @@ impl Database {
     pub fn get_profiles_by_tag(&self, tag: &str) -> SqliteResult<Vec<Profile>> {
         let search_pattern = format!("%{}%", tag);
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, data_dir_path, chrome_path, icon_path, icon_base64, tags, 
+            "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
                     created_at, updated_at, last_opened_at, is_running, pid 
              FROM profiles 
              WHERE tags LIKE ?1
@@ -330,14 +344,15 @@ impl Database {
                 name: row.get(1)?,
                 data_dir_path: row.get(2)?,
                 chrome_path: row.get(3)?,
-                icon_path: row.get(4)?,
-                icon_base64: row.get(5)?,
-                tags: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                last_opened_at: row.get(9)?,
-                is_running: row.get::<_, i32>(10)? != 0,
-                pid: row.get(11)?,
+                homepage: row.get(4)?,
+                icon_path: row.get(5)?,
+                icon_base64: row.get(6)?,
+                tags: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                last_opened_at: row.get(10)?,
+                is_running: row.get::<_, i32>(11)? != 0,
+                pid: row.get(12)?,
             })
         })?;
 

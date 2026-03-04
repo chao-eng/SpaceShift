@@ -41,6 +41,9 @@
             <el-icon><Timer /></el-icon>
             <span>未使用</span>
           </span>
+          <span v-if="profile.homepage" class="homepage-indicator" :title="profile.homepage">
+            <el-icon><Link /></el-icon>
+          </span>
         </div>
       </div>
       
@@ -102,7 +105,8 @@ import {
   FolderOpened,
   VideoPlay,
   MoreFilled,
-  Loading
+  Loading,
+  Link
 } from '@element-plus/icons-vue';
 import type { Profile } from '../types';
 
@@ -348,6 +352,19 @@ const handleCommand = (command: string) => {
 
   &.never {
     color: var(--text-quaternary);
+  }
+}
+
+.homepage-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2);
+  color: var(--primary-400);
+  vertical-align: middle;
+  
+  .el-icon {
+    font-size: 13px;
+    cursor: help;
   }
 }
 

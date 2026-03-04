@@ -7,11 +7,11 @@ export const api = {
 
   getProfile: (id: string): Promise<Profile | null> => invoke('get_profile', { id }),
 
-  createProfile: (name: string, chromePath?: string, iconBase64?: string, tags?: string): Promise<Profile> =>
-    invoke('create_profile', { name, chromePath, iconBase64, tags }),
+  createProfile: (name: string, chromePath?: string, homepage?: string, iconBase64?: string, tags?: string): Promise<Profile> =>
+    invoke('create_profile', { name, chromePath, homepage, iconBase64, tags }),
 
-  updateProfile: (id: string, name?: string, chromePath?: string, iconBase64?: string, tags?: string): Promise<boolean> =>
-    invoke('update_profile', { id, name, chromePath, iconBase64, tags }),
+  updateProfile: (id: string, name?: string, chromePath?: string, homepage?: string, iconBase64?: string, tags?: string): Promise<boolean> =>
+    invoke('update_profile', { id, name, chromePath, homepage, iconBase64, tags }),
 
   deleteProfile: (id: string): Promise<boolean> => invoke('delete_profile', { id }),
 

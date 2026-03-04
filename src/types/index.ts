@@ -3,6 +3,7 @@ export interface Profile {
   name: string;
   data_dir_path: string;
   chrome_path?: string;
+  homepage?: string;
   icon_path?: string;
   icon_base64?: string;
   tags?: string;
