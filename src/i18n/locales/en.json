@@ -14,6 +14,7 @@
         "search": "Search profiles or tags...",
         "newProfile": "New Profile",
         "settings": "Settings",
+        "officialSite": "Official Site",
         "theme": {
             "dark": "Switch to Dark Mode",
             "light": "Switch to Light Mode"
