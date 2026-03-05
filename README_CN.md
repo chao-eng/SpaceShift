@@ -52,7 +52,7 @@ SpaceShift 是一款现代、高性能、跨平台的多配置浏览器管理工
 
 编译对应你当前操作系统的原生可执行文件:
 ```bash
-yarn build
+yarn tauri build
 ```
 *(编译完成的二进制文件将在 `src-tauri/target/release/bundle/` 目录中生成)*
 

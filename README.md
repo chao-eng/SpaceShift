@@ -52,7 +52,7 @@ SpaceShift is a modern, high-performance, cross-platform multi-profile browser m
 
 Compile a native executable for your current OS:
 ```bash
-yarn build
+yarn tauri build
 ```
 *(The compiled binaries will be generated in `src-tauri/target/release/bundle/`)*
 
