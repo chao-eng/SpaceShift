@@ -4,7 +4,7 @@
 
 SpaceShift is a powerful, lightweight Chrome Profile Management tool built with **Tauri**, **Rust**, and **Vue 3**. It's designed to help developer, marketers, and power users manage multiple Chrome profiles with ease, ensuring data isolation and high performance.
 
-![SpaceShift Banner](https://raw.githubusercontent.com/chao-eng/SpaceShift/main/src-tauri/icons/128x128.png)
+![SpaceShift Banner](https://raw.githubusercontent.com/chao-eng/SpaceShift/master/src-tauri/icons/128x128.png)
 
 ## ✨ Features
 
