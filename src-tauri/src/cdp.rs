@@ -69,7 +69,7 @@ pub async fn fetch_real_metrics(port: u16) -> Option<CdpMetrics> {
             "id": i + 100,
             "method": "Runtime.evaluate",
             "params": {
-                "expression": "JSON.stringify(window.performance.timing)",
+                "expression": "JSON.stringify(window.performance.getEntriesByType('navigation')[0] || window.performance.timing)",
                 "returnByValue": true
             }
         });
@@ -84,8 +84,10 @@ pub async fn fetch_real_metrics(port: u16) -> Option<CdpMetrics> {
                     if v["id"].as_u64() == Some((i + 100) as u64) {
                         if let Some(result_str) = v["result"]["result"]["value"].as_str() {
                             if let Ok(timing) = serde_json::from_str::<Value>(result_str) {
-                                let load_event_end = timing["loadEventEnd"].as_u64().unwrap_or(0);
-                                if load_event_end > 0 {
+                                // For `performance.timing` (deprecated), `loadEventEnd` is an absolute epoch time.
+                                // For `PerformanceNavigationTiming` (modern), `loadEventEnd` is a high-res relative float.
+                                let load_event_end = timing["loadEventEnd"].as_f64().unwrap_or(0.0);
+                                if load_event_end > 0.0 {
                                     metrics = Some(parse_timing(timing));
                                     break;
                                 }
@@ -107,7 +109,12 @@ pub async fn fetch_real_metrics(port: u16) -> Option<CdpMetrics> {
 }
 
 fn parse_timing(t: Value) -> CdpMetrics {
-    let get = |k: &str| t[k].as_u64().unwrap_or(0);
+    // We check if the response is from modern `PerformanceNavigationTiming` or old `performance.timing`.
+    // The modern API uses float milliseconds relative to fetchStart (which is usually around 0.0).
+    // The deprecated API uses u64 absolute timestamps.
+    let is_modern = t.get("name").is_some();
+    
+    let get = |k: &str| t[k].as_f64().unwrap_or(0.0);
 
     let fetch_start = get("fetchStart");
     let dns_start = get("domainLookupStart");
@@ -119,11 +126,21 @@ fn parse_timing(t: Value) -> CdpMetrics {
     let dom_content = get("domContentLoadedEventEnd");
     let load_event = get("loadEventEnd");
 
-    CdpMetrics {
-        dns_duration_ms: if dns_end >= dns_start { dns_end - dns_start } else { 0 },
-        tcp_duration_ms: if connect_end >= connect_start { connect_end - connect_start } else { 0 },
-        first_byte_ms: if response_start >= request_start { response_start - request_start } else { 0 },
-        dom_ready_ms: if dom_content >= fetch_start { dom_content - fetch_start } else { 0 },
-        page_load_ms: if load_event >= fetch_start { load_event - fetch_start } else { 0 },
+    if is_modern {
+        CdpMetrics {
+            dns_duration_ms: if dns_end >= dns_start { (dns_end - dns_start) as u64 } else { 0 },
+            tcp_duration_ms: if connect_end >= connect_start { (connect_end - connect_start) as u64 } else { 0 },
+            first_byte_ms: if response_start >= request_start { (response_start - request_start) as u64 } else { 0 },
+            dom_ready_ms: if dom_content >= 0.0 { dom_content as u64 } else { 0 },
+            page_load_ms: if load_event >= 0.0 { load_event as u64 } else { 0 },
+        }
+    } else {
+        CdpMetrics {
+            dns_duration_ms: if dns_end >= dns_start { (dns_end - dns_start) as u64 } else { 0 },
+            tcp_duration_ms: if connect_end >= connect_start { (connect_end - connect_start) as u64 } else { 0 },
+            first_byte_ms: if response_start >= request_start { (response_start - request_start) as u64 } else { 0 },
+            dom_ready_ms: if dom_content >= fetch_start { (dom_content - fetch_start) as u64 } else { 0 },
+            page_load_ms: if load_event >= fetch_start { (load_event - fetch_start) as u64 } else { 0 },
+        }
     }
 }

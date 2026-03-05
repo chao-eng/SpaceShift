@@ -1,72 +1,69 @@
 # SpaceShift
 
-[中文介绍](./README_CN.md)
+SpaceShift is a modern, high-performance, cross-platform multi-profile browser management tool built with **Rust**, **Tauri v2**, and **Vue 3**. It allows you to seamlessly create, manage, and launch multiple isolated Google Chrome profiles on a single machine.
 
-SpaceShift is a powerful, lightweight Chrome Profile Management tool built with **Tauri**, **Rust**, and **Vue 3**. It's designed to help developer, marketers, and power users manage multiple Chrome profiles with ease, ensuring data isolation and high performance.
-
-![SpaceShift Banner](https://raw.githubusercontent.com/chao-eng/SpaceShift/master/src-tauri/icons/128x128.png)
+[中文文档 (Chinese)](README_CN.md)
 
 ## ✨ Features
 
-- **🚀 High Performance**: Built with Rust backend for near-instant startup and minimal resource usage.
-- **🛡️ Data Isolation**: Each profile has its own dedicated data directory, keeping your browsing data completely separate.
-- **📊 Performance Monitoring**: Real-time tracking of browser startup time, process creation, and DOM ready events.
-- **💾 Easy Backup**: Built-in backup and restore functionality for your profile data.
-- **🎨 Modern UI**: Beautiful "Liquid Glass" aesthetic inspired by modern productivity tools.
-- **🌍 Internationalization**: Supports both English and Chinese.
+- 🚀 **Hardware-Accelerated Core**: Built on Tauri v2 and Rust, offering an extremely low memory footprint compared to Electron-based alternatives.
+- 📦 **Total Data Isolation**: Each profile receives its own dedicated `User Data Directory`, ensuring complete separation of cookies, local storage, extensions, and cache.
+- 🌗 **Native Dark Mode Sync**: Flawless dark mode that instantly synchronizes the internal UI with the native OS window borders (Windows & macOS).
+- 📊 **Real-time Performance Metrics**: Connects dynamically via Chrome DevTools Protocol (CDP) to measure exact page load, DOM ready, and TCP/DNS timings for your profiles.
+- 🛠 **System-Aware Optimizations**: Automatically applies platform-specific memory and network optimization flags (e.g., PowerShell memory checks on Windows, `/proc/meminfo` on Linux) to prevent system hangs.
+- 🗄 **Backup & Restore**: Easily snapshot and restore your profile directories with a single click.
+- 🌐 **Internationalization**: Fully localized in English and Simplified Chinese out of the box.
+- ⚡ **Batch Operations**: Multi-select support to staggered-launch multiple profiles at once without spiking your CPU.
+- 🛡 **Smart Lock Release**: Built-in repair utility to clean up orphaned Chrome lockfiles (`SingletonLock`, `Parent.lock`) when browser processes crash abruptly.
 
-## 🛠️ Tech Stack
+## 📦 Tech Stack
 
-- **Frontend**: Vue 3, Vite, TypeScript, Element Plus, Pinia, vue-i18n.
-- **Backend**: Rust, Tauri, SQLite (via `rusqlite`).
-- **Styling**: SCSS, Flexbox/Grid for responsive design.
+- **Frontend**: Vue 3 (Composition API), Vite, TypeScript, Element Plus, Pinia, Vue-i18n, SCSS.
+- **Backend / Core**: Rust, Tauri v2.
+- **System Integration**: `winreg` (Windows path resolving), custom CDP WebSockets (`tokio-tungstenite`), `sysinfo`.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - [Node.js](https://nodejs.org/) (v16+)
-- [Rust](https://www.rust-lang.org/) (latest stable)
-- [Tauri Dependencies](https://tauri.app/v1/guides/getting-started/prerequisites)
+- [Rust](https://rustup.rs/) (latest stable)
+- **Chrome/Chromium** installed on your system. SpaceShift will automatically scan common installation paths and registry entries to find it.
 
-### Installation
+### Installation & Development
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/chao-eng/SpaceShift.git
-   cd SpaceShift
+   git clone https://github.com/yourusername/spaceshift.git
+   cd spaceshift
    ```
 
-2. Install dependencies:
+2. Install frontend dependencies:
    ```bash
    yarn install
+   # or npm install / pnpm install
    ```
 
-3. Run in development mode:
+3. Start the development server (runs Vite + Tauri backend):
    ```bash
    yarn tauri dev
    ```
 
-4. Build for production:
-   ```bash
-   yarn tauri build
-   ```
+### Building for Production
 
-## � Usage
+Compile a native executable for your current OS:
+```bash
+yarn build
+```
+*(The compiled binaries will be generated in `src-tauri/target/release/bundle/`)*
 
-1. **Create Profile**: Click the "New Profile" button and specify a name and optional icon/tags.
-2. **Launch Chrome**: Click the play icon on a profile card to start a dedicated Chrome instance.
-3. **Monitor Performance**: After launching, use the "Performance" action to see detailed startup metrics.
-4. **Backup Data**: Periodically backup your profiles to ensure no data loss.
+## 💡 Usage Highlights
 
-## 🤝 Contributing
+- **Creating a Profile**: Click "New Profile" to create an isolated environment. You can specify a custom Chrome path or let SpaceShift auto-detect it.
+- **Monitoring**: After launching a profile, click the "..." menu and select "Performance" to view real-time CDP timings for recent launches.
+- **Repair**: If a profile is stuck and won't launch, click "Repair (Unlock)" to wipe lingering Chromium lockfiles.
+- **Batch Launch**: Check multiple profile cards to trigger the batch operations toolbar, allowing you to launch several instances with built-in startup delays.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 📝 License
 
-## � License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Created with ❤️ by [chao-eng](https://github.com/chao-eng)
+This project is open-sourced under the MIT License.
+Created by bujic.
