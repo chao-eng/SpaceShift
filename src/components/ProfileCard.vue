@@ -253,6 +253,10 @@ const handleCommand = (command: string) => {
     .selection-box {
       opacity: 1;
     }
+
+    :global(.dark) & {
+      background: rgba(12, 157, 248, 0.15); // Slightly brighter for dark mode selected state
+    }
   }
 }
 
@@ -271,7 +275,7 @@ const handleCommand = (command: string) => {
     width: 100%;
     height: 100%;
     border-radius: 4px;
-    border: 1.5px solid var(--gray-300);
+    border: 1.5px solid var(--border-medium);
     background: var(--bg-primary);
     display: flex;
     align-items: center;
@@ -405,8 +409,9 @@ const handleCommand = (command: string) => {
   background: var(--primary-50);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--primary-100);
+  border: 1px solid var(--primary-200);
   line-height: 1.4;
+  transition: all 0.2s ease;
 }
 
 // 元信息

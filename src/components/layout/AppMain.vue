@@ -163,16 +163,21 @@ const handleDelete = async (profile: Profile) => {
   bottom: var(--space-8);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-primary);
-  border: 1px solid var(--primary-200);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-2xl);
   padding: var(--space-3) var(--space-6);
   display: flex;
   align-items: center;
   gap: var(--space-10);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl);
   z-index: var(--z-fixed);
   backdrop-filter: blur(12px);
+  
+  // Apply transparent background if we are in dark mode (html.dark)
+  :global(.dark) & {
+    background: rgba(39, 46, 59, 0.85); // Transparent version of bg-elevated
+  }
 }
 
 .batch-info {
@@ -190,6 +195,18 @@ const handleDelete = async (profile: Profile) => {
   .el-button {
     height: 36px;
     border-radius: var(--radius-lg);
+  }
+  
+  .el-button--info.is-plain {
+    background: transparent;
+    border-color: var(--border-medium);
+    color: var(--text-secondary);
+    
+    &:hover {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
   }
 }
 
