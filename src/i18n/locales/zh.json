@@ -1,0 +1,105 @@
+{
+    "common": {
+        "save": "保存",
+        "cancel": "取消",
+        "confirm": "确定",
+        "delete": "删除",
+        "edit": "编辑",
+        "loading": "加载中...",
+        "success": "成功",
+        "error": "错误",
+        "warning": "提醒"
+    },
+    "header": {
+        "search": "搜索配置或标签...",
+        "newProfile": "新建配置",
+        "settings": "系统设置"
+    },
+    "main": {
+        "count": "共 {count} 个配置",
+        "gridView": "网格模式",
+        "listView": "列表模式",
+        "noProfiles": "暂无配置，点击右上角按钮创建",
+        "deleteConfirm": {
+            "title": "确认删除?",
+            "content": "此操作将永久删除该配置的所有本地数据，此操作不可撤销。"
+        }
+    },
+    "profile": {
+        "status": {
+            "running": "运行中",
+            "unused": "未使用",
+            "justNow": "刚刚",
+            "minutesAgo": "{n}分钟前",
+            "hoursAgo": "{n}小时前",
+            "daysAgo": "{n}天前"
+        },
+        "actions": {
+            "launch": "启动浏览器",
+            "edit": "编辑配置",
+            "performance": "运行性能",
+            "backup": "备份数据",
+            "openDir": "查看目录",
+            "delete": "删除配置"
+        },
+        "form": {
+            "titleCreate": "新建浏览器配置",
+            "titleEdit": "编辑浏览器配置",
+            "name": "配置名称",
+            "namePlaceholder": "输入配置名称 (必填)",
+            "chromePath": "Chrome 路径",
+            "chromePathPlaceholder": "默认使用系统内置 Chrome",
+            "homepage": "主页",
+            "homepagePlaceholder": "https://www.google.com",
+            "icon": "配置头像",
+            "tags": "标签",
+            "tagsPlaceholder": "输入标签并回车 (可选)"
+        }
+    },
+    "performance": {
+        "title": "性能分析报告",
+        "noData": "暂无性能数据，请先启动浏览器",
+        "metrics": {
+            "avgLaunch": "平均启动耗时",
+            "avgSpawn": "进程创建耗时",
+            "status": "系统状态"
+        },
+        "status": {
+            "unknown": "未知",
+            "fast": "极速",
+            "good": "良好",
+            "slow": "缓慢"
+        },
+        "historyTitle": "最近 10 次启动分析",
+        "table": {
+            "time": "时间",
+            "total": "总耗时",
+            "spawn": "进程创建",
+            "network": "网络/DOM (估算)"
+        },
+        "suggestions": {
+            "title": "优化建议",
+            "slow": "启动速度较慢。建议清理浏览器缓存或减少启动页依赖。",
+            "fast": "您的浏览器启动流程非常顺畅，目前的参数配置已接近最优。"
+        }
+    },
+    "backup": {
+        "title": "备份管理 - {name}",
+        "newBackup": "创建新备份",
+        "noBackups": "尚未有任何备份",
+        "table": {
+            "time": "备份时间",
+            "size": "占用空间",
+            "actions": "操作"
+        },
+        "actions": {
+            "restore": "恢复",
+            "delete": "删除"
+        },
+        "messages": {
+            "backing": "正在备份...",
+            "restoring": "正在恢复...",
+            "deleteConfirm": "确认要删除该备份吗？"
+        }
+    }
+}

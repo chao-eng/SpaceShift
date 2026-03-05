@@ -6,11 +6,11 @@
 
     <el-empty
       v-else-if="profileStore.filteredProfiles.length === 0"
-      :description="profileStore.searchQuery ? '未找到匹配的配置' : '暂无配置，点击右上角创建'"
+      :description="profileStore.searchQuery ? $t('common.error') : $t('main.noProfiles')"
       class="empty-state"
     >
       <el-button v-if="!profileStore.searchQuery" type="primary" @click="$emit('create')">
-        创建第一个配置
+        {{ $t('header.newProfile') }}
       </el-button>
     </el-empty>
 
@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useProfileStore } from '../../store/profile';
 import ProfileCard from '../ProfileCard.vue';
 import { api } from '../../api';
@@ -44,12 +45,13 @@ import type { Profile } from '../../types';
 
 defineEmits(['create', 'edit', 'backup', 'performance']);
 const profileStore = useProfileStore();
+const { t } = useI18n();
 
 const handleOpenDir = async (profile: Profile) => {
   try {
     await api.openProfileDirectory(profile.data_dir_path);
   } catch (error) {
-    ElMessage.error('无法打开目录');
+    ElMessage.error(t('common.error'));
     console.error(error);
   }
 };
@@ -57,21 +59,21 @@ const handleOpenDir = async (profile: Profile) => {
 const handleDelete = async (profile: Profile) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除配置 "${profile.name}" 吗？此操作将删除所有相关数据，不可恢复。`,
-      '确认删除',
+      t('main.deleteConfirm.content'),
+      t('main.deleteConfirm.title'),
       {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning',
       }
     );
 
     await api.deleteProfile(profile.id);
-    ElMessage.success('配置已删除');
+    ElMessage.success(t('common.success'));
     await profileStore.loadProfiles();
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败');
+      ElMessage.error(t('common.error'));
       console.error(error);
     }
   }

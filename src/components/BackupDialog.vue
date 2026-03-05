@@ -1,26 +1,26 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="备份管理"
+    :title="$t('backup.title', { name: profile?.name })"
     width="600px"
     destroy-on-close
   >
-    <div v-loading="isBackingUp" element-loading-text="正在打包配置文件，请稍候..." class="backup-container">
+    <div v-loading="isBackingUp" :element-loading-text="$t('backup.messages.backing')" class="backup-container">
       <div class="backup-actions">
         <el-button @click="handleOpenBackupDir">
           <el-icon><FolderOpened /></el-icon>
-          查看目录
+          {{ $t('profile.actions.openDir') }}
         </el-button>
         <el-button type="primary" @click="handleBackup" :loading="isBackingUp">
           <el-icon><DocumentCopy /></el-icon>
-          {{ isBackingUp ? '正在备份...' : '立即备份' }}
+          {{ isBackingUp ? $t('backup.messages.backing') : $t('backup.newBackup') }}
         </el-button>
       </div>
 
       <el-divider />
 
       <div class="backup-list">
-        <el-empty v-if="backups.length === 0" description="暂无备份" />
+        <el-empty v-if="backups.length === 0" :description="$t('backup.noBackups')" />
         
         <el-timeline v-else>
           <el-timeline-item
@@ -45,14 +45,14 @@
                     @click="handleRestore(backup)"
                     :loading="restoringId === backup.id"
                   >
-                    恢复
+                    {{ $t('backup.actions.restore') }}
                   </el-button>
                   <el-button
                     type="danger"
                     link
                     @click="handleDelete(backup)"
                   >
-                    删除
+                    {{ $t('backup.actions.delete') }}
                   </el-button>
                 </div>
               </div>
@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { DocumentCopy, Document, FolderOpened } from '@element-plus/icons-vue';
 import type { Profile, Backup } from '../types';
@@ -81,6 +82,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   success: [];
 }>();
+
+const { t, locale } = useI18n();
 
 const visible = computed({
   get: () => props.modelValue,
@@ -111,7 +114,7 @@ watch(
 );
 
 const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleString('zh-CN');
+  return new Date(dateStr).toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US');
 };
 
 const formatSize = (bytes: number) => {
@@ -132,34 +135,33 @@ const getBackupName = (path: string) => {
   return parts[parts.length - 1];
 };
 
+const getDefaultBackupDir = async (): Promise<string> => {
+  const home = await homeDir();
+  return await join(home, 'SpaceShift', 'Backups');
+};
+
 const handleBackup = async () => {
   if (!props.profile) return;
   
   isBackingUp.value = true;
   
   try {
-    // Use Downloads folder as default backup location
     const backupDir = await getDefaultBackupDir();
     const result = await api.backupProfile(props.profile.id, backupDir);
     
     if (result.success) {
-      ElMessage.success('备份成功');
+      ElMessage.success(t('common.success'));
       await loadBackups();
       emit('success');
     } else {
-      ElMessage.error(result.error || '备份失败');
+      ElMessage.error(result.error || t('common.error'));
     }
   } catch (error) {
-    ElMessage.error('备份失败');
+    ElMessage.error(t('common.error'));
     console.error(error);
   } finally {
     isBackingUp.value = false;
   }
-};
-
-const getDefaultBackupDir = async (): Promise<string> => {
-  const home = await homeDir();
-  return await join(home, 'SpaceShift', 'Backups');
 };
 
 const handleOpenBackupDir = async () => {
@@ -167,7 +169,7 @@ const handleOpenBackupDir = async () => {
     const backupDir = await getDefaultBackupDir();
     await api.openProfileDirectory(backupDir);
   } catch (error) {
-    ElMessage.error('无法打开目录');
+    ElMessage.error(t('common.error'));
     console.error(error);
   }
 };
@@ -177,11 +179,11 @@ const handleRestore = async (backup: Backup) => {
   
   try {
     await ElMessageBox.confirm(
-      '恢复备份将覆盖当前配置的所有数据，是否继续？',
-      '确认恢复',
+      t('backup.messages.restoring'),
+      t('common.warning'),
       {
-        confirmButtonText: '恢复',
-        cancelButtonText: '取消',
+        confirmButtonText: t('backup.actions.restore'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning',
       }
     );
@@ -191,14 +193,14 @@ const handleRestore = async (backup: Backup) => {
     const result = await api.restoreProfile(props.profile.id, backup.backup_path);
     
     if (result.success) {
-      ElMessage.success('恢复成功');
+      ElMessage.success(t('common.success'));
       emit('success');
     } else {
-      ElMessage.error(result.error || '恢复失败');
+      ElMessage.error(result.error || t('common.error'));
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('恢复失败');
+      ElMessage.error(t('common.error'));
       console.error(error);
     }
   } finally {
@@ -209,21 +211,21 @@ const handleRestore = async (backup: Backup) => {
 const handleDelete = async (backup: Backup) => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除这个备份吗？此操作不可恢复。',
-      '确认删除',
+      t('backup.messages.deleteConfirm'),
+      t('main.deleteConfirm.title'),
       {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning',
       }
     );
     
     await api.deleteBackup(backup.id);
-    ElMessage.success('备份已删除');
+    ElMessage.success(t('common.success'));
     await loadBackups();
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败');
+      ElMessage.error(t('common.error'));
       console.error(error);
     }
   }

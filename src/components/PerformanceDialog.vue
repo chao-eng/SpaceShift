@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="性能分析报告"
+    :title="$t('performance.title')"
     width="700px"
     destroy-on-close
     class="performance-dialog"
@@ -11,22 +11,22 @@
     </div>
 
     <div v-else-if="logs.length === 0" class="empty-state">
-      <el-empty description="暂无性能数据，请先启动浏览器" />
+      <el-empty :description="$t('performance.noData')" />
     </div>
 
     <div v-else class="performance-content">
       <!-- 概览卡片 -->
       <div class="metrics-overview">
         <div class="metric-card">
-          <div class="metric-label">平均启动耗时</div>
+          <div class="metric-label">{{ $t('performance.metrics.avgLaunch') }}</div>
           <div class="metric-value">{{ avgLaunchTime.toFixed(0) }}<span>ms</span></div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">进程创建耗时</div>
+          <div class="metric-label">{{ $t('performance.metrics.avgSpawn') }}</div>
           <div class="metric-value">{{ avgSpawnTime.toFixed(0) }}<span>ms</span></div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">状态</div>
+          <div class="metric-label">{{ $t('performance.metrics.status') }}</div>
           <div class="metric-value status" :class="performanceStatus.class">
             {{ performanceStatus.text }}
           </div>
@@ -35,26 +35,26 @@
 
       <!-- 历史记录列表 -->
       <div class="history-section">
-        <h4 class="section-title">最近 10 次启动分析</h4>
+        <h4 class="section-title">{{ $t('performance.historyTitle') }}</h4>
         <el-table :data="logs" stripe style="width: 100%" size="small">
-          <el-table-column prop="created_at" label="时间" width="160">
+          <el-table-column prop="created_at" :label="$t('performance.table.time')" width="160">
             <template #default="scope">
               {{ formatDateTime(scope.row.created_at) }}
             </template>
           </el-table-column>
-          <el-table-column label="总耗时">
+          <el-table-column :label="$t('performance.table.total')">
             <template #default="scope">
               <el-tag :type="getDurationTag(scope.row.launch_duration_ms)">
                 {{ scope.row.launch_duration_ms }} ms
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="spawn_duration_ms" label="进程创建" width="100">
+          <el-table-column prop="spawn_duration_ms" :label="$t('performance.table.spawn')" width="100">
             <template #default="scope">
               {{ scope.row.spawn_duration_ms }} ms
             </template>
           </el-table-column>
-          <el-table-column label="网络/DOM (估算)">
+          <el-table-column :label="$t('performance.table.network')">
             <template #default="scope">
               <span class="sub-metrics">
                 DNS: {{ scope.row.dns_duration_ms }}ms | DOM: {{ scope.row.dom_ready_ms }}ms
@@ -66,20 +66,20 @@
 
       <!-- 优化建议 -->
       <div class="suggestions-section">
-        <h4 class="section-title">优化建议</h4>
+        <h4 class="section-title">{{ $t('performance.suggestions.title') }}</h4>
         <el-alert
           v-if="avgLaunchTime > 3000"
-          title="启动速度较慢"
+          :title="$t('performance.suggestions.title')"
           type="warning"
-          description="平均启动耗时超过 3s。建议清理浏览器缓存或减少启动页依赖。"
+          :description="$t('performance.suggestions.slow')"
           show-icon
           :closable="false"
         />
         <el-alert
           v-else
-          title="系统响应良好"
+          :title="$t('common.success')"
           type="success"
-          description="您的浏览器启动流程非常顺畅，目前的参数配置已接近最优。"
+          :description="$t('performance.suggestions.fast')"
           show-icon
           :closable="false"
         />
@@ -90,6 +90,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../api';
 import type { Profile, PerformanceRecord } from '../types';
 
@@ -109,6 +110,7 @@ const visible = computed({
 
 const logs = ref<PerformanceRecord[]>([]);
 const loading = ref(false);
+const { t, locale } = useI18n();
 
 const loadLogs = async () => {
   if (!props.profile) return;
@@ -145,10 +147,10 @@ const avgSpawnTime = computed(() => {
 
 const performanceStatus = computed(() => {
   const avg = avgLaunchTime.value;
-  if (avg === 0) return { text: '未知', class: '' };
-  if (avg < 2000) return { text: '极速', class: 'status-fast' };
-  if (avg < 5000) return { text: '良好', class: 'status-good' };
-  return { text: '缓慢', class: 'status-slow' };
+  if (avg === 0) return { text: t('performance.status.unknown'), class: '' };
+  if (avg < 2000) return { text: t('performance.status.fast'), class: 'status-fast' };
+  if (avg < 5000) return { text: t('performance.status.good'), class: 'status-good' };
+  return { text: t('performance.status.slow'), class: 'status-slow' };
 });
 
 const getDurationTag = (duration: number) => {
@@ -159,7 +161,7 @@ const getDurationTag = (duration: number) => {
 
 const formatDateTime = (dateStr: string) => {
   const date = new Date(dateStr);
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',

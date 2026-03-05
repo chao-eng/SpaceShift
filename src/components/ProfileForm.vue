@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEdit ? '编辑配置' : '新建配置'"
+    :title="isEdit ? $t('profile.form.titleEdit') : $t('profile.form.titleCreate')"
     width="500px"
     destroy-on-close
   >
@@ -12,45 +12,43 @@
       label-width="80px"
       label-position="top"
     >
-      <el-form-item label="配置名称" prop="name">
+      <el-form-item :label="$t('profile.form.name')" prop="name">
         <el-input
           v-model="form.name"
-          placeholder="请输入配置名称"
+          :placeholder="$t('profile.form.namePlaceholder')"
           maxlength="50"
           show-word-limit
         />
       </el-form-item>
 
-      <el-form-item label="Chrome 路径 (可选)" prop="chrome_path">
+      <el-form-item :label="$t('profile.form.chromePath')" prop="chrome_path">
         <el-input
           v-model="form.chrome_path"
-          placeholder="手动指定 Chrome 可执行文件路径 (留空使用默认)"
+          :placeholder="$t('profile.form.chromePathPlaceholder')"
           clearable
         />
-        <div class="form-tip">留空将自动查找系统默认安装的 Chrome</div>
       </el-form-item>
 
-      <el-form-item label="启动页面 (可选)" prop="homepage">
+      <el-form-item :label="$t('profile.form.homepage')" prop="homepage">
         <el-input
           v-model="form.homepage"
-          placeholder="例如: https://www.google.com"
+          :placeholder="$t('profile.form.homepagePlaceholder')"
           clearable
         >
           <template #prefix>
             <el-icon><Monitor /></el-icon>
           </template>
         </el-input>
-        <div class="form-tip">启动 Chrome 时自动打开的网址</div>
       </el-form-item>
 
-      <el-form-item label="图标">
+      <el-form-item :label="$t('profile.form.icon')">
         <div class="icon-selector">
           <div class="current-icon" @click="triggerFileInput">
             <img v-if="form.icon_base64" :src="form.icon_base64" alt="Icon" />
             <el-avatar v-else :size="80" :icon="UserFilled" />
             <div class="icon-overlay">
               <el-icon><Camera /></el-icon>
-              <span>更换图标</span>
+              <span>{{ $t('profile.actions.edit') }}</span>
             </div>
           </div>
           <input
@@ -63,14 +61,14 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="标签">
+      <el-form-item :label="$t('profile.form.tags')">
         <el-select
           v-model="tagList"
           multiple
           filterable
           allow-create
           default-first-option
-          placeholder="添加标签"
+          :placeholder="$t('profile.form.tagsPlaceholder')"
           style="width: 100%"
         >
           <el-option
@@ -84,9 +82,9 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ $t('common.cancel') }}</el-button>
       <el-button type="primary" @click="handleSubmit" :loading="isSubmitting">
-        {{ isEdit ? '保存' : '创建' }}
+        {{ isEdit ? $t('common.save') : $t('common.confirm') }}
       </el-button>
     </template>
   </el-dialog>
@@ -94,6 +92,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { UserFilled, Camera, Monitor } from '@element-plus/icons-vue';
 import type { Profile } from '../types';
@@ -109,6 +108,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   success: [];
 }>();
+
+const { t } = useI18n();
 
 const visible = computed({
   get: () => props.modelValue,
@@ -133,13 +134,13 @@ const tagList = ref<string[]>([]);
 
 const rules = {
   name: [
-    { required: true, message: '请输入配置名称', trigger: 'blur' },
-    { min: 1, max: 50, message: '名称长度在 1 到 50 个字符', trigger: 'blur' },
+    { required: true, message: t('profile.form.namePlaceholder'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('profile.form.namePlaceholder'), trigger: 'blur' },
   ],
   homepage: [
     { 
       pattern: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/, 
-      message: '请输入有效的网址 (例如: https://google.com)', 
+      message: t('profile.form.homepagePlaceholder'), 
       trigger: 'blur' 
     }
   ]
@@ -181,7 +182,7 @@ const handleFileChange = (event: Event) => {
   
   if (file) {
     if (file.size > 2 * 1024 * 1024) {
-      ElMessage.error('图片大小不能超过 2MB');
+      ElMessage.error(t('common.error'));
       return;
     }
     
@@ -214,7 +215,7 @@ const handleSubmit = async () => {
         form.value.icon_base64 || undefined,
         tags || undefined
       );
-      ElMessage.success('配置已更新');
+      ElMessage.success(t('common.success'));
     } else {
       await api.createProfile(
         form.value.name,
@@ -223,13 +224,13 @@ const handleSubmit = async () => {
         form.value.icon_base64 || undefined,
         tags || undefined
       );
-      ElMessage.success('配置已创建');
+      ElMessage.success(t('common.success'));
     }
     
     emit('success');
     visible.value = false;
   } catch (error) {
-    ElMessage.error(isEdit.value ? '更新失败' : '创建失败');
+    ElMessage.error(t('common.error'));
     console.error(error);
   } finally {
     isSubmitting.value = false;

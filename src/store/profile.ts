@@ -4,6 +4,7 @@ import { api } from '../api';
 import type { Profile, ViewMode } from '../types';
 import { ElMessage } from 'element-plus';
 import { listen } from '@tauri-apps/api/event';
+import i18n from '../i18n';
 
 export const useProfileStore = defineStore('profile', () => {
     const profiles = ref<Profile[]>([]);
@@ -38,7 +39,7 @@ export const useProfileStore = defineStore('profile', () => {
         try {
             profiles.value = await api.getProfiles();
         } catch (error) {
-            ElMessage.error('加载配置失败');
+            ElMessage.error(i18n.global.t('common.error'));
             console.error(error);
         } finally {
             loading.value = false;
@@ -53,13 +54,13 @@ export const useProfileStore = defineStore('profile', () => {
             const result = await api.launchChrome(profile.id);
 
             if (result.success) {
-                ElMessage.success(`已启动: ${profile.name}`);
+                ElMessage.success(i18n.global.t('common.success'));
                 await loadProfiles();
             } else {
-                ElMessage.error(result.error || '启动失败');
+                ElMessage.error(result.error || i18n.global.t('common.error'));
             }
         } catch (error) {
-            ElMessage.error('启动失败');
+            ElMessage.error(i18n.global.t('common.error'));
             console.error(error);
         } finally {
             launchingProfiles.value.delete(profile.id);

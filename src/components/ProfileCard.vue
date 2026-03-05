@@ -31,7 +31,7 @@
         <div class="profile-meta">
           <span v-if="profile.is_running" class="status-tag running">
             <span class="status-dot"></span>
-            运行中
+            {{ $t('profile.status.running') }}
           </span>
           <span v-else-if="profile.last_opened_at" class="last-opened">
             <el-icon><Timer /></el-icon>
@@ -39,7 +39,7 @@
           </span>
           <span v-else class="last-opened never">
             <el-icon><Timer /></el-icon>
-            <span>未使用</span>
+            <span>{{ $t('profile.status.unused') }}</span>
           </span>
           <span v-if="profile.homepage" class="homepage-indicator" :title="profile.homepage">
             <el-icon><Link /></el-icon>
@@ -50,7 +50,7 @@
       <!-- 操作区域 -->
       <div class="profile-actions">
         <el-tooltip
-          content="启动浏览器"
+          :content="$t('profile.actions.launch')"
           placement="top"
           :show-after="300"
         >
@@ -72,23 +72,23 @@
             <el-dropdown-menu class="profile-dropdown-menu">
               <el-dropdown-item command="edit">
                 <el-icon><Edit /></el-icon>
-                <span>编辑配置</span>
+                <span>{{ $t('profile.actions.edit') }}</span>
               </el-dropdown-item>
               <el-dropdown-item command="performance">
                 <el-icon><DataLine /></el-icon>
-                <span>运行性能</span>
+                <span>{{ $t('profile.actions.performance') }}</span>
               </el-dropdown-item>
               <el-dropdown-item command="backup">
                 <el-icon><DocumentCopy /></el-icon>
-                <span>备份数据</span>
+                <span>{{ $t('profile.actions.backup') }}</span>
               </el-dropdown-item>
               <el-dropdown-item command="openDir">
                 <el-icon><FolderOpened /></el-icon>
-                <span>查看目录</span>
+                <span>{{ $t('profile.actions.openDir') }}</span>
               </el-dropdown-item>
               <el-dropdown-item divided command="delete" class="danger-item">
                 <el-icon><Delete /></el-icon>
-                <span>删除配置</span>
+                <span>{{ $t('profile.actions.delete') }}</span>
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -100,6 +100,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { 
   UserFilled, 
   Timer, 
@@ -130,6 +131,8 @@ const emit = defineEmits<{
   performance: [profile: Profile];
 }>();
 
+const { t, locale } = useI18n();
+
 const tagList = computed(() => {
   return props.profile.tags?.split(',').map(t => t.trim()).filter(Boolean) || [];
 });
@@ -143,12 +146,12 @@ const formatDate = (dateStr: string) => {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
   
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
-  if (hours < 24) return `${hours}小时前`;
-  if (days < 30) return `${days}天前`;
+  if (minutes < 1) return t('profile.status.justNow');
+  if (minutes < 60) return t('profile.status.minutesAgo', { n: minutes });
+  if (hours < 24) return t('profile.status.hoursAgo', { n: hours });
+  if (days < 30) return t('profile.status.daysAgo', { n: days });
   
-  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
 const handleLaunch = async () => {

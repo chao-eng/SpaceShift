@@ -1,0 +1,105 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "edit": "Edit",
+        "loading": "Loading...",
+        "success": "Success",
+        "error": "Error",
+        "warning": "Warning"
+    },
+    "header": {
+        "search": "Search profiles or tags...",
+        "newProfile": "New Profile",
+        "settings": "Settings"
+    },
+    "main": {
+        "count": "{count} profiles in total",
+        "gridView": "Grid View",
+        "listView": "List View",
+        "noProfiles": "No profiles found. Click the button above to create one.",
+        "deleteConfirm": {
+            "title": "Confirm Delete?",
+            "content": "This will permanently delete all local data for this profile. This action cannot be undone."
+        }
+    },
+    "profile": {
+        "status": {
+            "running": "Running",
+            "unused": "Unused",
+            "justNow": "Just now",
+            "minutesAgo": "{n}m ago",
+            "hoursAgo": "{n}h ago",
+            "daysAgo": "{n}d ago"
+        },
+        "actions": {
+            "launch": "Launch Browser",
+            "edit": "Edit Settings",
+            "performance": "Performance",
+            "backup": "Backup Data",
+            "openDir": "Open Directory",
+            "delete": "Delete Profile"
+        },
+        "form": {
+            "titleCreate": "New Browser Profile",
+            "titleEdit": "Edit Browser Profile",
+            "name": "Profile Name",
+            "namePlaceholder": "Enter profile name (required)",
+            "chromePath": "Chrome Path",
+            "chromePathPlaceholder": "Uses system Chrome by default",
+            "homepage": "Home Page",
+            "homepagePlaceholder": "https://www.google.com",
+            "icon": "Profile Icon",
+            "tags": "Tags",
+            "tagsPlaceholder": "Enter tags & press Enter (optional)"
+        }
+    },
+    "performance": {
+        "title": "Performance Report",
+        "noData": "No data yet. Please launch the browser first.",
+        "metrics": {
+            "avgLaunch": "Avg Launch",
+            "avgSpawn": "Process Spawn",
+            "status": "System Status"
+        },
+        "status": {
+            "unknown": "Unknown",
+            "fast": "Fast",
+            "good": "Good",
+            "slow": "Slow"
+        },
+        "historyTitle": "Last 10 Launch Metrics",
+        "table": {
+            "time": "Time",
+            "total": "Total",
+            "spawn": "Spawn",
+            "network": "Network/DOM (Estimated)"
+        },
+        "suggestions": {
+            "title": "Suggestions",
+            "slow": "Launch is slow. Consider clearing browser cache or reducing startup page complexity.",
+            "fast": "Your browser startup is very smooth. Current configuration is near optimal."
+        }
+    },
+    "backup": {
+        "title": "Backups - {name}",
+        "newBackup": "Create New Backup",
+        "noBackups": "No backups available yet",
+        "table": {
+            "time": "Backup Time",
+            "size": "Size",
+            "actions": "Actions"
+        },
+        "actions": {
+            "restore": "Restore",
+            "delete": "Delete"
+        },
+        "messages": {
+            "backing": "Backing up...",
+            "restoring": "Restoring data...",
+            "deleteConfirm": "Are you sure you want to delete this backup?"
+        }
+    }
+}
