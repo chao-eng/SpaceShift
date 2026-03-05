@@ -9,6 +9,7 @@ mod network_optimizer;
 mod performance_monitor;
 mod browser_monitor;
 mod error;
+mod cdp;
 
 use db::{Database, Profile, Backup, PerformanceRecord};
 use chrome::{ChromeManager, ChromeLaunchResult};
@@ -139,15 +140,31 @@ fn launch_chrome(
                 }
 
                 if let Some(total_ms) = ready_ms {
+                    // Try to fetch real metrics via CDP
+                    let mut dns_ms = Some(total_ms / 10);
+                    let mut tcp_ms = Some(total_ms / 5);
+                    let mut dom_ms = Some(total_ms);
+                    let mut load_ms = Some(total_ms + 200);
+
+                    if let Some(real) = cdp::fetch_real_metrics(port).await {
+                        println!("[Lib] Real CDP metrics fetched for {}", profile_id);
+                        dns_ms = Some(real.dns_duration_ms);
+                        tcp_ms = Some(real.tcp_duration_ms);
+                        dom_ms = Some(real.dom_ready_ms);
+                        load_ms = Some(real.page_load_ms);
+                    } else {
+                        println!("[Lib] Failed to fetch real metrics, using estimates for {}", profile_id);
+                    }
+
                     let record = PerformanceRecord {
                         id: uuid::Uuid::new_v4().to_string(),
                         profile_id: profile_id.clone(),
                         launch_duration_ms: total_ms,
                         spawn_duration_ms: spawn_ms,
-                        dns_duration_ms: Some(total_ms / 10), // Mocked sub-metrics for now
-                        tcp_duration_ms: Some(total_ms / 5),
-                        dom_ready_ms: Some(total_ms),
-                        page_load_ms: Some(total_ms + 200),
+                        dns_duration_ms: dns_ms,
+                        tcp_duration_ms: tcp_ms,
+                        dom_ready_ms: dom_ms,
+                        page_load_ms: load_ms,
                         created_at: chrono::Utc::now().to_rfc3339(),
                     };
 

@@ -43,7 +43,7 @@ impl BrowserMonitor {
                     if !is_running && profile.is_running {
                         println!("[Monitor] '{}' appears stopped, entering 4.5s triple-check period...", profile.name);
                         for i in 1..=2 {
-                            std::thread::sleep(Duration::from_millis(1500));
+                            tokio::time::sleep(Duration::from_millis(1500)).await;
                             is_running = Self::check_if_profile_running(&profile.data_dir_path, &profile.name);
                             if is_running { 
                                 println!("[Monitor] '{}' recovered via retry #{}", profile.name, i);
