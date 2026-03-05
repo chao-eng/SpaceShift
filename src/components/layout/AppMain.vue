@@ -27,6 +27,7 @@
         @launch="profileStore.handleLaunch"
         @edit="$emit('edit', profile)"
         @backup="$emit('backup', profile)"
+        @performance="$emit('performance', profile)"
         @delete="handleDelete"
         @openDir="handleOpenDir"
       />
@@ -41,7 +42,7 @@ import { api } from '../../api';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { Profile } from '../../types';
 
-defineEmits(['create', 'edit', 'backup']);
+defineEmits(['create', 'edit', 'backup', 'performance']);
 const profileStore = useProfileStore();
 
 const handleOpenDir = async (profile: Profile) => {

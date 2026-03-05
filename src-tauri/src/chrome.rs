@@ -18,7 +18,7 @@ impl ChromeManager {
         ChromeManager
     }
 
-    pub fn launch_chrome(&self, _profile_id: &str, user_data_dir: &PathBuf, chrome_path: Option<&str>, url: Option<&str>) -> ChromeLaunchResult {
+    pub fn launch_chrome(&self, _profile_id: &str, user_data_dir: &PathBuf, chrome_path: Option<&str>, url: Option<&str>, debug_port: Option<u16>) -> ChromeLaunchResult {
         let mut cmd = if let Some(path) = chrome_path {
             Command::new(path)
         } else {
@@ -55,6 +55,10 @@ impl ChromeManager {
 
         cmd.arg(format!("--user-data-dir={}", user_data_dir.display()));
         
+        if let Some(port) = debug_port {
+            cmd.arg(format!("--remote-debugging-port={}", port));
+        }
+
         let optimized_args = NetworkOptimizer::get_optimized_args();
         for arg in optimized_args {
             cmd.arg(arg);

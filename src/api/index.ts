@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { Profile, Backup, ChromeLaunchResult, BackupResult, RestoreResult } from '../types';
+import type { Profile, Backup, ChromeLaunchResult, BackupResult, RestoreResult, PerformanceRecord } from '../types';
 
 export const api = {
   // Profile operations
@@ -34,6 +34,9 @@ export const api = {
   searchProfiles: (query: string): Promise<Profile[]> => invoke('search_profiles', { query }),
 
   getProfilesByTag: (tag: string): Promise<Profile[]> => invoke('get_profiles_by_tag', { tag }),
+
+  // Performance operations
+  getPerformanceLogs: (id: string, limit?: number): Promise<PerformanceRecord[]> => invoke('get_performance_logs', { id, limit }),
 
   // Utility
   getProfileSize: (id: string): Promise<string> => invoke('get_profile_size', { id }),

@@ -6,6 +6,7 @@
       @create="handleCreate"
       @edit="handleEdit"
       @backup="handleBackup"
+      @performance="handleShowPerformance"
     />
 
     <ProfileForm
@@ -20,6 +21,11 @@
       :profile="selectedProfile"
       @success="profileStore.loadProfiles"
     />
+
+    <PerformanceDialog
+      v-model="showPerformanceDialog"
+      :profile="selectedProfile"
+    />
   </div>
 </template>
 
@@ -29,6 +35,7 @@ import AppHeader from './components/layout/AppHeader.vue';
 import AppMain from './components/layout/AppMain.vue';
 import ProfileForm from './components/ProfileForm.vue';
 import BackupDialog from './components/BackupDialog.vue';
+import PerformanceDialog from './components/PerformanceDialog.vue';
 import type { Profile } from './types';
 import { useProfileStore } from './store/profile';
 
@@ -36,6 +43,7 @@ const profileStore = useProfileStore();
 
 const showForm = ref(false);
 const showBackupDialog = ref(false);
+const showPerformanceDialog = ref(false);
 const editingProfile = ref<Profile | null>(null);
 const selectedProfile = ref<Profile | null>(null);
 
@@ -52,6 +60,11 @@ const handleEdit = (profile: Profile) => {
 const handleBackup = (profile: Profile) => {
   selectedProfile.value = profile;
   showBackupDialog.value = true;
+};
+
+const handleShowPerformance = (profile: Profile) => {
+  selectedProfile.value = profile;
+  showPerformanceDialog.value = true;
 };
 
 onMounted(async () => {

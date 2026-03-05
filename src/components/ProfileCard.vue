@@ -74,6 +74,10 @@
                 <el-icon><Edit /></el-icon>
                 <span>编辑配置</span>
               </el-dropdown-item>
+              <el-dropdown-item command="performance">
+                <el-icon><DataLine /></el-icon>
+                <span>运行性能</span>
+              </el-dropdown-item>
               <el-dropdown-item command="backup">
                 <el-icon><DocumentCopy /></el-icon>
                 <span>备份数据</span>
@@ -106,7 +110,8 @@ import {
   VideoPlay,
   MoreFilled,
   Loading,
-  Link
+  Link,
+  DataLine
 } from '@element-plus/icons-vue';
 import type { Profile } from '../types';
 
@@ -122,6 +127,7 @@ const emit = defineEmits<{
   backup: [profile: Profile];
   delete: [profile: Profile];
   openDir: [profile: Profile];
+  performance: [profile: Profile];
 }>();
 
 const tagList = computed(() => {
@@ -165,6 +171,9 @@ const handleCommand = (command: string) => {
       break;
     case 'delete':
       emit('delete', props.profile);
+      break;
+    case 'performance':
+      emit('performance', props.profile);
       break;
   }
 };

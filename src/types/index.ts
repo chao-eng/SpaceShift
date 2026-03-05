@@ -41,3 +41,15 @@ export interface RestoreResult {
 }
 
 export type ViewMode = 'grid' | 'list';
+
+export interface PerformanceRecord {
+  id: string;
+  profile_id: string;
+  launch_duration_ms: number;
+  spawn_duration_ms: number;
+  dns_duration_ms?: number;
+  tcp_duration_ms?: number;
+  dom_ready_ms?: number;
+  page_load_ms?: number;
+  created_at: string;
+}

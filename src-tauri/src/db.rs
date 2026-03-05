@@ -30,6 +30,19 @@ pub struct Backup {
     pub size_bytes: i64,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PerformanceRecord {
+    pub id: String,
+    pub profile_id: String,
+    pub launch_duration_ms: u64,
+    pub spawn_duration_ms: u64,
+    pub dns_duration_ms: Option<u64>,
+    pub tcp_duration_ms: Option<u64>,
+    pub dom_ready_ms: Option<u64>,
+    pub page_load_ms: Option<u64>,
+    pub created_at: String,
+}
+
 pub struct Database {
     conn: Connection,
 }
@@ -61,6 +74,22 @@ impl Database {
                 last_opened_at TEXT,
                 is_running INTEGER DEFAULT 0,
                 pid INTEGER
+            )",
+            [],
+        )?;
+
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS performance_logs (
+                id TEXT PRIMARY KEY,
+                profile_id TEXT NOT NULL,
+                launch_duration_ms INTEGER NOT NULL,
+                spawn_duration_ms INTEGER NOT NULL,
+                dns_duration_ms INTEGER,
+                tcp_duration_ms INTEGER,
+                dom_ready_ms INTEGER,
+                page_load_ms INTEGER,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
             )",
             [],
         )?;
@@ -357,5 +386,47 @@ impl Database {
         })?;
 
         profiles.collect()
+    }
+
+    pub fn save_performance_record(&self, record: &PerformanceRecord) -> SqliteResult<()> {
+        self.conn.execute(
+            "INSERT INTO performance_logs (id, profile_id, launch_duration_ms, spawn_duration_ms, dns_duration_ms, tcp_duration_ms, dom_ready_ms, page_load_ms, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            (
+                &record.id,
+                &record.profile_id,
+                record.launch_duration_ms as i64,
+                record.spawn_duration_ms as i64,
+                record.dns_duration_ms.map(|v| v as i64),
+                record.tcp_duration_ms.map(|v| v as i64),
+                record.dom_ready_ms.map(|v| v as i64),
+                record.page_load_ms.map(|v| v as i64),
+                &record.created_at,
+            ),
+        )?;
+        Ok(())
+    }
+
+    pub fn get_performance_logs(&self, profile_id: &str, limit: i32) -> SqliteResult<Vec<PerformanceRecord>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, launch_duration_ms, spawn_duration_ms, dns_duration_ms, tcp_duration_ms, dom_ready_ms, page_load_ms, created_at
+             FROM performance_logs WHERE profile_id = ?1 ORDER BY created_at DESC LIMIT ?2"
+        )?;
+
+        let logs = stmt.query_map([profile_id, &limit.to_string()], |row| {
+            Ok(PerformanceRecord {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                launch_duration_ms: row.get::<_, i64>(2)? as u64,
+                spawn_duration_ms: row.get::<_, i64>(3)? as u64,
+                dns_duration_ms: row.get::<_, Option<i64>>(4)?.map(|v| v as u64),
+                tcp_duration_ms: row.get::<_, Option<i64>>(5)?.map(|v| v as u64),
+                dom_ready_ms: row.get::<_, Option<i64>>(6)?.map(|v| v as u64),
+                page_load_ms: row.get::<_, Option<i64>>(7)?.map(|v| v as u64),
+                created_at: row.get(8)?,
+            })
+        })?;
+
+        logs.collect()
     }
 }

@@ -105,6 +105,22 @@ impl PerformanceMonitor {
         }
     }
 
+    /// Convert to database record
+    pub fn to_record(&self, profile_id: &str) -> crate::db::PerformanceRecord {
+        use uuid::Uuid;
+        crate::db::PerformanceRecord {
+            id: Uuid::new_v4().to_string(),
+            profile_id: profile_id.to_string(),
+            launch_duration_ms: self.metrics.total_launch_duration_ms,
+            spawn_duration_ms: self.metrics.chrome_process_spawn_ms,
+            dns_duration_ms: self.metrics.dns_lookup_time_ms,
+            tcp_duration_ms: self.metrics.tcp_connect_time_ms,
+            dom_ready_ms: self.metrics.dom_content_loaded_ms,
+            page_load_ms: self.metrics.page_load_complete_ms,
+            created_at: chrono::Utc::now().to_rfc3339(),
+        }
+    }
+
     /// Get current metrics
     pub fn get_metrics(&self) -> &PerformanceMetrics {
         &self.metrics
