@@ -9,6 +9,7 @@ pub struct ChromeLaunchResult {
     pub success: bool,
     pub pid: Option<u32>,
     pub error: Option<String>,
+    pub spawn_duration_ms: u64,
 }
 
 pub struct ChromeManager;
@@ -72,20 +73,27 @@ impl ChromeManager {
         cmd.stdout(std::process::Stdio::null());
         cmd.stderr(std::process::Stdio::null());
 
+        let start = std::time::Instant::now();
         match cmd.spawn() {
             Ok(child) => {
+                let duration = start.elapsed().as_millis() as u64;
                 let pid = child.id();
                 ChromeLaunchResult {
                     success: true,
                     pid: Some(pid),
                     error: None,
+                    spawn_duration_ms: duration,
                 }
             }
-            Err(e) => ChromeLaunchResult {
-                success: false,
-                pid: None,
-                error: Some(format!("Failed to launch Chrome: {}", e)),
-            },
+            Err(e) => {
+                let duration = start.elapsed().as_millis() as u64;
+                ChromeLaunchResult {
+                    success: false,
+                    pid: None,
+                    error: Some(format!("Failed to launch Chrome: {}", e)),
+                    spawn_duration_ms: duration,
+                }
+            }
         }
     }
 }

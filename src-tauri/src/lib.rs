@@ -103,6 +103,7 @@ fn launch_chrome(
         .and_then(|l| l.local_addr().ok())
         .map(|a| a.port());
 
+    let start_inst = std::time::Instant::now();
     let result = state.chrome_manager.launch_chrome(
         &id, 
         &profile_dir, 
@@ -118,8 +119,7 @@ fn launch_chrome(
         if let Some(port) = debug_port {
             let db_clone = state.db.clone();
             let profile_id = id.clone();
-            let start_inst = std::time::Instant::now();
-            let spawn_ms = start_inst.elapsed().as_millis() as u64;
+            let spawn_ms = result.spawn_duration_ms;
 
             tauri::async_runtime::spawn(async move {
                 println!("[Lib] Monitoring performance for port: {}", port);
