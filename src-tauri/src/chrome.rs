@@ -115,15 +115,15 @@ impl ChromeManager {
             }
 
             // 3. Fallback to common paths
-            let common_paths = [
-                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+            let common_paths = vec![
+                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe".to_string(),
+                "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe".to_string(),
                 format!("{}\\Google\\Chrome\\Application\\chrome.exe", std::env::var("LOCALAPPDATA").unwrap_or_default()),
             ];
 
             for path in common_paths {
                 if !path.is_empty() && std::path::Path::new(&path).exists() {
-                    return Some(path.to_string());
+                    return Some(path);
                 }
             }
         }
