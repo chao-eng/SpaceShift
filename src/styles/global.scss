@@ -206,6 +206,7 @@ body {
   border: 1px solid var(--border-light);
   padding: var(--space-1);
   min-width: 140px;
+  background-color: var(--bg-elevated);
 }
 
 .el-dropdown-menu__item {
@@ -238,6 +239,7 @@ body {
   box-shadow: var(--shadow-xl);
   overflow: hidden;
   border: 1px solid var(--border-light);
+  background: var(--bg-elevated);
 
   .el-dialog__header {
     padding: var(--space-4) var(--space-5);
@@ -340,6 +342,7 @@ body {
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-light);
   padding: 12px 16px;
+  background: var(--bg-elevated);
 
   &--success {
     background: var(--success-light);
@@ -365,6 +368,7 @@ body {
   box-shadow: var(--shadow-xl);
   border: 1px solid var(--border-light);
   padding-bottom: var(--space-4);
+  background: var(--bg-elevated);
 
   &__header {
     padding: var(--space-4) var(--space-5);
@@ -415,22 +419,53 @@ body {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
 }
 
 // Utility Classes
-.text-primary { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-tertiary { color: var(--text-tertiary); }
-.text-disabled { color: var(--text-disabled); }
+.text-primary {
+  color: var(--text-primary);
+}
 
-.bg-primary { background-color: var(--bg-primary); }
-.bg-secondary { background-color: var(--bg-secondary); }
-.bg-tertiary { background-color: var(--bg-tertiary); }
+.text-secondary {
+  color: var(--text-secondary);
+}
 
-.font-normal { font-weight: var(--font-normal); }
-.font-medium { font-weight: var(--font-medium); }
-.font-semibold { font-weight: var(--font-semibold); }
-.font-bold { font-weight: var(--font-bold); }
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+.text-disabled {
+  color: var(--text-disabled);
+}
+
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+.font-normal {
+  font-weight: var(--font-normal);
+}
+
+.font-medium {
+  font-weight: var(--font-medium);
+}
+
+.font-semibold {
+  font-weight: var(--font-semibold);
+}
+
+.font-bold {
+  font-weight: var(--font-bold);
+}

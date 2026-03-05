@@ -39,7 +39,7 @@
         <el-table :data="logs" stripe style="width: 100%" size="small">
           <el-table-column prop="created_at" :label="$t('performance.table.time')" width="160">
             <template #default="scope">
-              {{ formatDateTime(scope.row.created_at) }}
+              {{ formatDateTimeLocal(scope.row.created_at) }}
             </template>
           </el-table-column>
           <el-table-column :label="$t('performance.table.total')">
@@ -93,6 +93,7 @@ import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '../api';
 import type { Profile, PerformanceRecord } from '../types';
+import { formatDateTime } from '../utils/format';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -159,14 +160,8 @@ const getDurationTag = (duration: number) => {
   return 'danger';
 };
 
-const formatDateTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+const formatDateTimeLocal = (dateStr: string) => {
+  return formatDateTime(dateStr, locale.value);
 };
 </script>
 

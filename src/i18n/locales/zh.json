@@ -13,13 +13,19 @@
     "header": {
         "search": "搜索配置或标签...",
         "newProfile": "新建配置",
-        "settings": "系统设置"
+        "settings": "系统设置",
+        "theme": {
+            "dark": "切换暗色模式",
+            "light": "切换明亮模式"
+        }
     },
     "main": {
         "count": "共 {count} 个配置",
         "gridView": "网格模式",
         "listView": "列表模式",
         "noProfiles": "暂无配置，点击右上角按钮创建",
+        "batchSelected": "已选择 {n} 个配置",
+        "batchLaunching": "正在批量启动 {count} 个配置...",
         "deleteConfirm": {
             "title": "确认删除?",
             "content": "此操作将永久删除该配置的所有本地数据，此操作不可撤销。"
@@ -40,6 +46,7 @@
             "performance": "运行性能",
             "backup": "备份数据",
             "openDir": "查看目录",
+            "repair": "修复配置 (解锁)",
             "delete": "删除配置"
         },
         "form": {

@@ -174,29 +174,33 @@
 }
 
 // Dark Mode Support
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #1d2129;
-    --bg-secondary: #272e3b;
-    --bg-tertiary: #374151;
-    --bg-elevated: #272e3b;
-    --bg-hover: #2f3744;
-    --bg-active: #374151;
+html.dark {
+  --bg-primary: #1d2129;
+  --bg-secondary: #272e3b;
+  --bg-tertiary: #374151;
+  --bg-elevated: #272e3b;
+  --bg-hover: #2f3744;
+  --bg-active: #374151;
 
-    --text-primary: #f5f7fa;
-    --text-secondary: #c5cdd6;
-    --text-tertiary: #86909c;
-    --text-disabled: #4e5969;
+  // Primary color adjustments for dark mode
+  --primary-50: rgba(12, 157, 248, 0.1);
+  --primary-100: rgba(12, 157, 248, 0.2);
+  --primary-200: rgba(12, 157, 248, 0.3);
+  --primary-600: #36b1fa; // Use brighter blue for text
 
-    --border-light: #374151;
-    --border-medium: #4e5969;
-    --border-strong: #6b7785;
+  --text-primary: #f5f7fa;
+  --text-secondary: #c5cdd6;
+  --text-tertiary: #86909c;
+  --text-disabled: #4e5969;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.35);
-    --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.4);
-    --shadow-2xl: 0 16px 32px rgba(0, 0, 0, 0.45);
-  }
+  --border-light: #374151;
+  --border-medium: #4e5969;
+  --border-strong: #6b7785;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.4);
+  --shadow-2xl: 0 16px 32px rgba(0, 0, 0, 0.45);
 }

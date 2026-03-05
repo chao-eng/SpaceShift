@@ -23,34 +23,25 @@ impl ChromeManager {
         let mut cmd = if let Some(path) = chrome_path {
             Command::new(path)
         } else {
+            let found_path = self.find_chrome_executable();
+            
             #[cfg(target_os = "macos")]
             {
                 let mut c = Command::new("open");
                 c.arg("-n");
                 c.arg("-a");
-                c.arg("Google Chrome");
+                c.arg(found_path.unwrap_or_else(|| "Google Chrome".to_string()));
                 c.arg("--args");
                 c
             }
-            #[cfg(target_os = "windows")]
+            
+            #[cfg(not(target_os = "macos"))]
             {
-                // Typical Windows paths for Chrome
-                let paths = vec![
-                    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-                ];
-                let mut found_path = "chrome.exe".to_string(); // Fallback to PATH
-                for p in paths {
-                    if std::path::Path::new(p).exists() {
-                        found_path = p.to_string();
-                        break;
-                    }
-                }
-                Command::new(found_path)
-            }
-            #[cfg(target_os = "linux")]
-            {
-                Command::new("google-chrome")
+                Command::new(found_path.unwrap_or_else(|| {
+                    #[cfg(target_os = "windows")] { "chrome.exe".to_string() }
+                    #[cfg(target_os = "linux")] { "google-chrome".to_string() }
+                    #[cfg(not(any(target_os = "windows", target_os = "linux")))] { "chrome".to_string() }
+                }))
             }
         };
 
@@ -95,5 +86,86 @@ impl ChromeManager {
                 }
             }
         }
+    }
+
+    pub fn find_chrome_executable(&self) -> Option<String> {
+        #[cfg(target_os = "windows")]
+        {
+            use winreg::enums::*;
+            use winreg::RegKey;
+
+            // 1. Try Registry (HKEY_LOCAL_MACHINE)
+            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+            if let Ok(key) = hklm.open_subkey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe") {
+                if let Ok(path) = key.get_value::<String, _>("") {
+                    if std::path::Path::new(&path).exists() {
+                        return Some(path);
+                    }
+                }
+            }
+
+            // 2. Try Registry (HKEY_CURRENT_USER)
+            let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+            if let Ok(key) = hkcu.open_subkey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe") {
+                if let Ok(path) = key.get_value::<String, _>("") {
+                    if std::path::Path::new(&path).exists() {
+                        return Some(path);
+                    }
+                }
+            }
+
+            // 3. Fallback to common paths
+            let common_paths = [
+                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+                format!("{}\\Google\\Chrome\\Application\\chrome.exe", std::env::var("LOCALAPPDATA").unwrap_or_default()),
+            ];
+
+            for path in common_paths {
+                if !path.is_empty() && std::path::Path::new(&path).exists() {
+                    return Some(path.to_string());
+                }
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            let apps = [
+                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+                "/Applications/Chromium.app/Contents/MacOS/Chromium",
+            ];
+            for path in apps {
+                if std::path::Path::new(path).exists() {
+                    return Some(path.to_string());
+                }
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            let binaries = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"];
+            for bin in binaries {
+                if std::process::Command::new("which").arg(bin).output().map(|o| o.status.success()).unwrap_or(false) {
+                    return Some(bin.to_string());
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn unlock_profile(&self, user_data_dir: &PathBuf) -> Result<(), String> {
+        let lock_files = ["SingletonLock", "Parent.lock", "lockfile"];
+        for file in lock_files {
+            let mut path = user_data_dir.clone();
+            path.push(file);
+            if path.exists() {
+                if let Err(e) = std::fs::remove_file(&path) {
+                    return Err(format!("Failed to remove lock file {}: {}", file, e));
+                }
+            }
+        }
+        Ok(())
     }
 }

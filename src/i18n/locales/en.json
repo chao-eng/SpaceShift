@@ -13,13 +13,19 @@
     "header": {
         "search": "Search profiles or tags...",
         "newProfile": "New Profile",
-        "settings": "Settings"
+        "settings": "Settings",
+        "theme": {
+            "dark": "Switch to Dark Mode",
+            "light": "Switch to Light Mode"
+        }
     },
     "main": {
         "count": "{count} profiles in total",
         "gridView": "Grid View",
         "listView": "List View",
         "noProfiles": "No profiles found. Click the button above to create one.",
+        "batchSelected": "{n} profiles selected",
+        "batchLaunching": "Batch launching {count} profiles...",
         "deleteConfirm": {
             "title": "Confirm Delete?",
             "content": "This will permanently delete all local data for this profile. This action cannot be undone."
@@ -40,6 +46,7 @@
             "performance": "Performance",
             "backup": "Backup Data",
             "openDir": "Open Directory",
+            "repair": "Repair (Unlock)",
             "delete": "Delete Profile"
         },
         "form": {

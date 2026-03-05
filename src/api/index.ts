@@ -44,6 +44,8 @@ export const api = {
   // Directory operations
   getAppDataDir: (): Promise<string> => invoke('get_app_data_dir'),
 
-  openProfileDirectory: (profileDataDir: string): Promise<void> =>
-    invoke('open_profile_directory', { profileDataDir }),
+  openProfileDirectory: (profileDataDir: string) =>
+    invoke<void>('open_profile_directory', { profileDataDir }),
+
+  unlockProfile: (id: string) => invoke<void>('unlock_profile', { id }),
 };

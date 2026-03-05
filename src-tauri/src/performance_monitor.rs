@@ -205,16 +205,37 @@ impl PerformanceOptimizer {
     pub fn analyze_system() -> Vec<String> {
         let mut recommendations = Vec::new();
         
-        // Check available memory
         #[cfg(target_os = "macos")]
         {
             if let Ok(output) = std::process::Command::new("vm_stat").output() {
                 let stdout = String::from_utf8_lossy(&output.stdout);
-                // Parse memory info
                 if stdout.contains("page size of") {
-                    // Memory check passed
+                    // Check for high pressure if possible, or just log success
                 } else {
                     recommendations.push("Unable to determine memory status".to_string());
+                }
+            }
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            if let Ok(output) = std::process::Command::new("powershell")
+                .args(["-Command", "(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory"])
+                .output() {
+                let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if let Ok(free_kb) = stdout.parse::<u64>() {
+                    if free_kb < 1024 * 1024 { // Less than 1GB free
+                        recommendations.push("Low available memory detected. Consider closing other applications.".to_string());
+                    }
+                }
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            if let Ok(contents) = std::fs::read_to_string("/proc/meminfo") {
+                if let Some(line) = contents.lines().find(|l| l.contains("MemAvailable")) {
+                    recommendations.push(format!("Current memory status: {}", line.trim()));
                 }
             }
         }
@@ -244,10 +265,15 @@ impl PerformanceOptimizer {
         ];
         
         // Add memory optimization for low-memory systems
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "windows"))]
         {
             flags.push("--memory-model=low".to_string());
             flags.push("--max_old_space_size=512".to_string());
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            flags.push("--disable-gpu-shader-disk-cache".to_string());
         }
         
         flags

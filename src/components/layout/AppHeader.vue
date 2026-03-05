@@ -47,6 +47,15 @@
         </button>
       </el-tooltip>
 
+      <el-tooltip :content="themeStore.isDark ? $t('header.theme.light') : $t('header.theme.dark')" placement="bottom" :show-after="300">
+        <button class="icon-btn" @click="themeStore.toggleTheme">
+          <el-icon>
+            <Sunny v-if="themeStore.isDark" />
+            <Moon v-else />
+          </el-icon>
+        </button>
+      </el-tooltip>
+
       <el-radio-group v-model="profileStore.viewMode" size="small" class="view-toggle">
         <el-tooltip :content="$t('main.gridView')" placement="bottom">
           <el-radio-button label="grid">
@@ -71,13 +80,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Search, Grid, List, Plus } from '@element-plus/icons-vue';
+import { Search, Grid, List, Plus, Sunny, Moon } from '@element-plus/icons-vue';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { ElMessage } from 'element-plus';
 import { useProfileStore } from '../../store/profile';
+import { useThemeStore } from '../../store/theme';
 
 defineEmits(['create']);
 const profileStore = useProfileStore();
+const themeStore = useThemeStore();
 const { locale } = useI18n();
 
 const currentLocale = computed(() => locale.value);
@@ -234,7 +245,7 @@ const handleOpenGithub = async () => {
   }
 
   &:hover {
-    background: var(--gray-100);
+    background: var(--bg-hover);
     color: var(--text-primary);
   }
   

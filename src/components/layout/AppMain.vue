@@ -23,15 +23,36 @@
         :key="profile.id"
         :profile="profile"
         :is-launching="profileStore.launchingProfiles.has(profile.id)"
+        :is-selected="profileStore.selectedIds.has(profile.id)"
         :style="{ animationDelay: `${index * 50}ms` }"
         @launch="profileStore.handleLaunch"
+        @toggleSelection="profileStore.toggleSelection"
         @edit="$emit('edit', profile)"
         @backup="$emit('backup', profile)"
         @performance="$emit('performance', profile)"
         @delete="handleDelete"
         @openDir="handleOpenDir"
+        @repair="handleRepair"
       />
     </div>
+
+    <!-- 批量操作栏 -->
+    <transition name="slide-up">
+      <div v-if="profileStore.selectedIds.size > 0" class="batch-bar">
+        <div class="batch-info">
+          <span class="batch-count">{{ $t('main.batchSelected', { n: profileStore.selectedIds.size }) }}</span>
+        </div>
+        <div class="batch-actions">
+          <el-button type="primary" plain @click="profileStore.handleBatchLaunch">
+            <el-icon><VideoPlay /></el-icon>
+            {{ $t('profile.actions.launch') }}
+          </el-button>
+          <el-button type="info" plain @click="profileStore.clearSelection">
+            {{ $t('common.cancel') }}
+          </el-button>
+        </div>
+      </div>
+    </transition>
   </main>
 </template>
 
@@ -41,6 +62,7 @@ import { useProfileStore } from '../../store/profile';
 import ProfileCard from '../ProfileCard.vue';
 import { api } from '../../api';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { VideoPlay } from '@element-plus/icons-vue';
 import type { Profile } from '../../types';
 
 defineEmits(['create', 'edit', 'backup', 'performance']);
@@ -50,6 +72,16 @@ const { t } = useI18n();
 const handleOpenDir = async (profile: Profile) => {
   try {
     await api.openProfileDirectory(profile.data_dir_path);
+  } catch (error) {
+    ElMessage.error(t('common.error'));
+    console.error(error);
+  }
+};
+
+const handleRepair = async (profile: Profile) => {
+  try {
+    await api.unlockProfile(profile.id);
+    ElMessage.success(t('common.success'));
   } catch (error) {
     ElMessage.error(t('common.error'));
     console.error(error);
@@ -125,6 +157,53 @@ const handleDelete = async (profile: Profile) => {
   }
 }
 
+// 批量操作栏样式
+.batch-bar {
+  position: fixed;
+  bottom: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  border: 1px solid var(--primary-200);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: var(--z-fixed);
+  backdrop-filter: blur(12px);
+}
+
+.batch-info {
+  .batch-count {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--primary-600);
+  }
+}
+
+.batch-actions {
+  display: flex;
+  gap: var(--space-3);
+  
+  .el-button {
+    height: 36px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translate(-50%, 100%);
+  opacity: 0;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -155,6 +234,13 @@ const handleDelete = async (profile: Profile) => {
   .profiles-container.grid-view {
     grid-template-columns: 1fr;
     gap: var(--space-3);
+  }
+
+  .batch-bar {
+    width: 90%;
+    bottom: var(--space-4);
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
   }
 }
 </style>

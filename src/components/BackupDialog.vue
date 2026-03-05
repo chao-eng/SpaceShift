@@ -26,7 +26,7 @@
           <el-timeline-item
             v-for="backup in backups"
             :key="backup.id"
-            :timestamp="formatDate(backup.created_at)"
+            :timestamp="formatDateLocal(backup.created_at)"
             placement="top"
           >
             <el-card>
@@ -69,9 +69,10 @@ import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { DocumentCopy, Document, FolderOpened } from '@element-plus/icons-vue';
+import { homeDir, join } from '@tauri-apps/api/path';
 import type { Profile, Backup } from '../types';
 import { api } from '../api';
-import { homeDir, join } from '@tauri-apps/api/path';
+import { formatSize, formatDate } from '../utils/format';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -113,21 +114,8 @@ watch(
   }
 );
 
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleString(locale.value === 'zh' ? 'zh-CN' : 'en-US');
-};
-
-const formatSize = (bytes: number) => {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let size = bytes;
-  let unitIndex = 0;
-  
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-  
-  return `${size.toFixed(2)} ${units[unitIndex]}`;
+const formatDateLocal = (dateStr: string) => {
+  return formatDate(dateStr, locale.value);
 };
 
 const getBackupName = (path: string) => {

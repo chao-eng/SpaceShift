@@ -12,6 +12,7 @@ export const useProfileStore = defineStore('profile', () => {
     const searchQuery = ref('');
     const viewMode = ref<ViewMode>('grid');
     const launchingProfiles = ref<Set<string>>(new Set());
+    const selectedIds = ref<Set<string>>(new Set());
 
     const filteredProfiles = computed(() => {
         if (!searchQuery.value) return profiles.value;
@@ -67,6 +68,35 @@ export const useProfileStore = defineStore('profile', () => {
         }
     };
 
+    const toggleSelection = (id: string) => {
+        if (selectedIds.value.has(id)) {
+            selectedIds.value.delete(id);
+        } else {
+            selectedIds.value.add(id);
+        }
+    };
+
+    const clearSelection = () => {
+        selectedIds.value.clear();
+    };
+
+    const handleBatchLaunch = async () => {
+        const ids = Array.from(selectedIds.value);
+        if (ids.length === 0) return;
+
+        ElMessage.info(i18n.global.t('main.batchLaunching', { count: ids.length }));
+
+        for (const id of ids) {
+            const profile = profiles.value.find(p => p.id === id);
+            if (profile && !profile.is_running) {
+                handleLaunch(profile);
+                // Stagger launch to avoid heavy CPU spike
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+        clearSelection();
+    };
+
     const initStatusListener = async () => {
         await listen('browser-status-update', (event: any) => {
             const { id, is_running } = event.payload;
@@ -83,10 +113,14 @@ export const useProfileStore = defineStore('profile', () => {
         searchQuery,
         viewMode,
         launchingProfiles,
+        selectedIds,
         filteredProfiles,
         existingTags,
         loadProfiles,
         handleLaunch,
+        toggleSelection,
+        clearSelection,
+        handleBatchLaunch,
         initStatusListener,
     };
 });

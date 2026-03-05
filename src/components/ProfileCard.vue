@@ -1,9 +1,19 @@
 <template>
   <div
     class="profile-card"
-    :class="{ 'is-launching': props.isLaunching, 'is-running': profile.is_running }"
+    :class="{ 
+      'is-launching': props.isLaunching, 
+      'is-running': profile.is_running,
+      'is-selected': props.isSelected 
+    }"
     @click="$emit('click', profile)"
   >
+    <!-- 全选按钮 (仅移动端或悬停显示，或者常驻) -->
+    <div class="selection-box" @click.stop="$emit('toggleSelection', profile.id)">
+      <div class="checkbox" :class="{ 'checked': props.isSelected }">
+        <el-icon v-if="props.isSelected"><Check /></el-icon>
+      </div>
+    </div>
     <!-- 状态指示条 -->
     <div class="status-bar"></div>
     
@@ -86,6 +96,10 @@
                 <el-icon><FolderOpened /></el-icon>
                 <span>{{ $t('profile.actions.openDir') }}</span>
               </el-dropdown-item>
+              <el-dropdown-item command="repair">
+                <el-icon><Refresh /></el-icon>
+                <span>{{ $t('profile.actions.repair') }}</span>
+              </el-dropdown-item>
               <el-dropdown-item divided command="delete" class="danger-item">
                 <el-icon><Delete /></el-icon>
                 <span>{{ $t('profile.actions.delete') }}</span>
@@ -112,13 +126,16 @@ import {
   MoreFilled,
   Loading,
   Link,
-  DataLine
+  DataLine,
+  Check,
+  Refresh
 } from '@element-plus/icons-vue';
 import type { Profile } from '../types';
 
 const props = defineProps<{
   profile: Profile;
   isLaunching?: boolean;
+  isSelected?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -129,6 +146,8 @@ const emit = defineEmits<{
   delete: [profile: Profile];
   openDir: [profile: Profile];
   performance: [profile: Profile];
+  toggleSelection: [id: string];
+  repair: [profile: Profile];
 }>();
 
 const { t, locale } = useI18n();
@@ -178,6 +197,9 @@ const handleCommand = (command: string) => {
     case 'performance':
       emit('performance', props.profile);
       break;
+    case 'repair':
+      emit('repair', props.profile);
+      break;
   }
 };
 </script>
@@ -219,14 +241,54 @@ const handleCommand = (command: string) => {
     }
   }
 
-  // 运行中状态
-  &.is-running {
-    border-color: var(--primary-400);
+  // 选中状态
+  &.is-selected {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
     
     .status-bar {
       opacity: 1;
     }
+
+    .selection-box {
+      opacity: 1;
+    }
   }
+}
+
+// 选择框
+.selection-box {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  .checkbox {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    border: 1.5px solid var(--gray-300);
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    transition: all 0.2s ease;
+
+    &.checked {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+    }
+  }
+}
+
+.profile-card:hover .selection-box {
+  opacity: 1;
 }
 
 // 顶部状态条
@@ -469,13 +531,17 @@ const handleCommand = (command: string) => {
   }
 }
 
-// 下拉菜单样式
-:deep(.profile-dropdown-menu) {
+</style>
+
+<style lang="scss">
+// 下拉菜单全局样式 (因为通过 teleport 挂载到 body)
+.profile-dropdown-menu {
   padding: var(--space-2);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light) !important;
+  box-shadow: var(--shadow-lg) !important;
   min-width: 140px;
+  background-color: var(--bg-elevated) !important;
 
   .el-dropdown-menu__item {
     padding: var(--space-2) var(--space-3);
@@ -493,7 +559,7 @@ const handleCommand = (command: string) => {
     }
 
     &:hover {
-      background: var(--gray-100);
+      background: var(--bg-hover) !important;
       color: var(--text-primary);
 
       .el-icon {
@@ -509,7 +575,11 @@ const handleCommand = (command: string) => {
       }
 
       &:hover {
-        background: var(--danger-light);
+        background: rgba(245, 63, 63, 0.1) !important;
+        color: var(--danger-color);
+        .el-icon {
+          color: var(--danger-color);
+        }
       }
     }
   }
@@ -523,7 +593,9 @@ const handleCommand = (command: string) => {
     }
   }
 }
+</style>
 
+<style scoped lang="scss">
 // 列表视图适配
 :deep(.list-view) {
   .profile-card-content {
@@ -578,4 +650,5 @@ const handleCommand = (command: string) => {
     }
   }
 }
+
 </style>

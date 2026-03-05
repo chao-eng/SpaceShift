@@ -36,3 +36,6 @@ tokio-tungstenite = "0.24"
 url = "2.5"
 futures-util = { version = "0.3", features = ["sink"] }
 
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+

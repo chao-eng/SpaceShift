@@ -324,6 +324,19 @@ fn open_profile_directory(profile_data_dir: String) -> AppResult<()> {
     Ok(())
 }
 
+#[tauri::command]
+fn unlock_profile(id: String, state: State<AppState>) -> AppResult<()> {
+    let db = state.db.lock().map_err(|e| AppError::Other(e.to_string()))?;
+    let profile = db.get_profile_by_id(&id)?
+        .ok_or(AppError::ProfileNotFound)?;
+    
+    let profile_dir = PathBuf::from(&profile.data_dir_path);
+    state.chrome_manager.unlock_profile(&profile_dir)
+        .map_err(|e| AppError::Other(e))?;
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -364,6 +377,7 @@ pub fn run() {
             get_profile_size,
             get_app_data_dir,
             open_profile_directory,
+            unlock_profile,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
