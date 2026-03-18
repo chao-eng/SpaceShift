@@ -17,6 +17,8 @@ use profile_manager::{ProfileManager, BackupResult, RestoreResult};
 use browser_monitor::BrowserMonitor;
 use error::{AppError, AppResult};
 use std::sync::Arc;
+use socket2::{SockRef, TcpKeepalive};
+use std::time::Duration;
 
 struct AppState {
     db: Arc<Mutex<Database>>,
@@ -130,9 +132,21 @@ fn launch_chrome(
                         match listener.accept().await {
                             Ok((mut client, addr)) => {
                                 let _ = client.set_nodelay(true);
+                                
+                                // Set keepalive for client (inbound)
+                                let sock_ref = SockRef::from(&client);
+                                let keepalive = TcpKeepalive::new().with_time(Duration::from_secs(60));
+                                let _ = sock_ref.set_tcp_keepalive(&keepalive);
+
                                 tokio::spawn(async move {
                                     if let Ok(mut server) = tokio::net::TcpStream::connect(format!("127.0.0.1:{}", local_port)).await {
                                         let _ = server.set_nodelay(true);
+                                        
+                                        // Set keepalive for server (outbound to Chrome)
+                                        let sock_ref = SockRef::from(&server);
+                                        let keepalive = TcpKeepalive::new().with_time(Duration::from_secs(60));
+                                        let _ = sock_ref.set_tcp_keepalive(&keepalive);
+
                                         if let Err(e) = tokio::io::copy_bidirectional(&mut client, &mut server).await {
                                             // Handle error if needed
                                         }
