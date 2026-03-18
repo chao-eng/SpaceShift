@@ -39,7 +39,9 @@
             "justNow": "Just now",
             "minutesAgo": "{n}m ago",
             "hoursAgo": "{n}h ago",
-            "daysAgo": "{n}d ago"
+            "daysAgo": "{n}d ago",
+            "cdpPort": "CDP Port",
+            "forwardPort": "CDP Forward Port"
         },
         "actions": {
             "launch": "Launch Browser",
@@ -61,7 +63,9 @@
             "homepagePlaceholder": "https://www.google.com",
             "icon": "Profile Icon",
             "tags": "Tags",
-            "tagsPlaceholder": "Enter tags & press Enter (optional)"
+            "tagsPlaceholder": "Enter tags & press Enter (optional)",
+            "forwardPortPlaceholder": "Leave empty to disable forwarding",
+            "forwardPortTip": "Forward CDP to 0.0.0.0 to allow LAN/WAN access"
         }
     },
     "performance": {

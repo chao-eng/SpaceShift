@@ -8,6 +8,7 @@ use crate::network_optimizer::NetworkOptimizer;
 pub struct ChromeLaunchResult {
     pub success: bool,
     pub pid: Option<u32>,
+    pub debug_port: Option<u16>,
     pub error: Option<String>,
     pub spawn_duration_ms: u64,
 }
@@ -72,6 +73,7 @@ impl ChromeManager {
                 ChromeLaunchResult {
                     success: true,
                     pid: Some(pid),
+                    debug_port,
                     error: None,
                     spawn_duration_ms: duration,
                 }
@@ -81,6 +83,7 @@ impl ChromeManager {
                 ChromeLaunchResult {
                     success: false,
                     pid: None,
+                    debug_port: None,
                     error: Some(format!("Failed to launch Chrome: {}", e)),
                     spawn_duration_ms: duration,
                 }

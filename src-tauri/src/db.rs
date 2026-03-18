@@ -19,6 +19,8 @@ pub struct Profile {
     pub last_opened_at: Option<String>,
     pub is_running: bool,
     pub pid: Option<i32>,
+    pub debug_port: Option<u16>,
+    pub forward_port: Option<u16>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -73,7 +75,9 @@ impl Database {
                 updated_at TEXT NOT NULL,
                 last_opened_at TEXT,
                 is_running INTEGER DEFAULT 0,
-                pid INTEGER
+                pid INTEGER,
+                debug_port INTEGER,
+                forward_port INTEGER
             )",
             [],
         )?;
@@ -119,18 +123,21 @@ impl Database {
         // Migrations
         let _ = self.conn.execute("ALTER TABLE profiles ADD COLUMN chrome_path TEXT", []);
         let _ = self.conn.execute("ALTER TABLE profiles ADD COLUMN homepage TEXT", []);
+        let _ = self.conn.execute("ALTER TABLE profiles ADD COLUMN debug_port INTEGER", []);
+        let _ = self.conn.execute("ALTER TABLE profiles ADD COLUMN forward_port INTEGER", []);
+        let _ = self.conn.execute("ALTER TABLE profiles RENAME COLUMN custom_cdp_port TO forward_port", []);
 
         Ok(())
     }
 
-    pub fn create_profile(&self, name: &str, data_dir_path: &str, chrome_path: Option<&str>, homepage: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>) -> SqliteResult<Profile> {
+    pub fn create_profile(&self, name: &str, data_dir_path: &str, chrome_path: Option<&str>, homepage: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>, forward_port: Option<u16>) -> SqliteResult<Profile> {
         let id = Uuid::new_v4().to_string();
         let now = Utc::now().to_rfc3339();
         
         self.conn.execute(
-            "INSERT INTO profiles (id, name, data_dir_path, chrome_path, homepage, icon_base64, tags, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            (&id, name, data_dir_path, chrome_path, homepage, icon_base64, tags, &now, &now),
+            "INSERT INTO profiles (id, name, data_dir_path, chrome_path, homepage, icon_base64, tags, forward_port, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            (&id, name, data_dir_path, chrome_path, homepage, icon_base64, tags, forward_port.map(|v| v as i32), &now, &now),
         )?;
 
         Ok(Profile {
@@ -147,13 +154,15 @@ impl Database {
             last_opened_at: None,
             is_running: false,
             pid: None,
+            debug_port: None,
+            forward_port,
         })
     }
 
     pub fn get_all_profiles(&self) -> SqliteResult<Vec<Profile>> {
         let mut stmt = self.conn.prepare(
             "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
-                    created_at, updated_at, last_opened_at, is_running, pid 
+                    created_at, updated_at, last_opened_at, is_running, pid, debug_port, forward_port 
              FROM profiles ORDER BY updated_at DESC"
         )?;
 
@@ -172,6 +181,8 @@ impl Database {
                 last_opened_at: row.get(10)?,
                 is_running: row.get::<_, i32>(11)? != 0,
                 pid: row.get(12)?,
+                debug_port: row.get::<_, Option<i32>>(13)?.map(|v| v as u16),
+                forward_port: row.get::<_, Option<i32>>(14)?.map(|v| v as u16),
             })
         })?;
 
@@ -181,7 +192,7 @@ impl Database {
     pub fn get_profile_by_id(&self, id: &str) -> SqliteResult<Option<Profile>> {
         let mut stmt = self.conn.prepare(
             "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
-                    created_at, updated_at, last_opened_at, is_running, pid 
+                    created_at, updated_at, last_opened_at, is_running, pid, debug_port, forward_port 
              FROM profiles WHERE id = ?1"
         )?;
 
@@ -200,13 +211,15 @@ impl Database {
                 last_opened_at: row.get(10)?,
                 is_running: row.get::<_, i32>(11)? != 0,
                 pid: row.get(12)?,
+                debug_port: row.get::<_, Option<i32>>(13)?.map(|v| v as u16),
+                forward_port: row.get::<_, Option<i32>>(14)?.map(|v| v as u16),
             })
         })?;
 
         rows.next().transpose()
     }
 
-    pub fn update_profile(&self, id: &str, name: Option<&str>, chrome_path: Option<&str>, homepage: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>) -> SqliteResult<bool> {
+    pub fn update_profile(&self, id: &str, name: Option<&str>, chrome_path: Option<&str>, homepage: Option<&str>, icon_base64: Option<&str>, tags: Option<&str>, forward_port: Option<u16>) -> SqliteResult<bool> {
         let now = Utc::now().to_rfc3339();
         
         if let Some(name) = name {
@@ -244,6 +257,13 @@ impl Database {
             )?;
         }
 
+        if let Some(port) = forward_port {
+            self.conn.execute(
+                "UPDATE profiles SET forward_port = ?1, updated_at = ?2 WHERE id = ?3",
+                (port as i32, &now, id),
+            )?;
+        }
+
         Ok(self.conn.changes() > 0)
     }
 
@@ -252,13 +272,13 @@ impl Database {
         Ok(self.conn.changes() > 0)
     }
 
-    pub fn update_profile_status(&self, id: &str, is_running: bool, pid: Option<i32>) -> SqliteResult<bool> {
+    pub fn update_profile_status(&self, id: &str, is_running: bool, pid: Option<i32>, debug_port: Option<u16>) -> SqliteResult<bool> {
         let now = Utc::now().to_rfc3339();
         let running = if is_running { 1 } else { 0 };
         
         self.conn.execute(
-            "UPDATE profiles SET is_running = ?1, pid = ?2, last_opened_at = ?3, updated_at = ?4 WHERE id = ?5",
-            (running, pid, &now, &now, id),
+            "UPDATE profiles SET is_running = ?1, pid = ?2, debug_port = ?3, last_opened_at = ?4, updated_at = ?5 WHERE id = ?6",
+            (running, pid, debug_port.map(|v| v as i32), &now, &now, id),
         )?;
 
         Ok(self.conn.changes() > 0)
@@ -330,7 +350,7 @@ impl Database {
         let search_pattern = format!("%{}%", query);
         let mut stmt = self.conn.prepare(
             "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
-                    created_at, updated_at, last_opened_at, is_running, pid 
+                    created_at, updated_at, last_opened_at, is_running, pid, debug_port, forward_port 
              FROM profiles 
              WHERE name LIKE ?1 OR tags LIKE ?1
              ORDER BY updated_at DESC"
@@ -351,6 +371,8 @@ impl Database {
                 last_opened_at: row.get(10)?,
                 is_running: row.get::<_, i32>(11)? != 0,
                 pid: row.get(12)?,
+                debug_port: row.get::<_, Option<i32>>(13)?.map(|v| v as u16),
+                forward_port: row.get::<_, Option<i32>>(14)?.map(|v| v as u16),
             })
         })?;
 
@@ -361,7 +383,7 @@ impl Database {
         let search_pattern = format!("%{}%", tag);
         let mut stmt = self.conn.prepare(
             "SELECT id, name, data_dir_path, chrome_path, homepage, icon_path, icon_base64, tags, 
-                    created_at, updated_at, last_opened_at, is_running, pid 
+                    created_at, updated_at, last_opened_at, is_running, pid, debug_port, forward_port 
              FROM profiles 
              WHERE tags LIKE ?1
              ORDER BY updated_at DESC"
@@ -382,6 +404,8 @@ impl Database {
                 last_opened_at: row.get(10)?,
                 is_running: row.get::<_, i32>(11)? != 0,
                 pid: row.get(12)?,
+                debug_port: row.get::<_, Option<i32>>(13)?.map(|v| v as u16),
+                forward_port: row.get::<_, Option<i32>>(14)?.map(|v| v as u16),
             })
         })?;
 

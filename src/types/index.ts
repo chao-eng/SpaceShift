@@ -12,6 +12,8 @@ export interface Profile {
   last_opened_at?: string;
   is_running: boolean;
   pid?: number;
+  debug_port?: number;
+  forward_port?: number;
 }
 
 export interface Backup {
@@ -25,6 +27,7 @@ export interface Backup {
 export interface ChromeLaunchResult {
   success: boolean;
   pid?: number;
+  debug_port?: number;
   error?: string;
 }
 

@@ -42,6 +42,7 @@ fn create_profile(
     homepage: Option<String>,
     icon_base64: Option<String>,
     tags: Option<String>,
+    forward_port: Option<u16>,
     app_handle: AppHandle,
     state: State<AppState>,
 ) -> AppResult<Profile> {
@@ -53,7 +54,7 @@ fn create_profile(
     let profile_dir = ProfileManager::create_profile_directory(&profiles_dir, &name)?;
     
     let db = state.db.lock().map_err(|e| AppError::Other(e.to_string()))?;
-    Ok(db.create_profile(&name, &profile_dir.to_string_lossy(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref())?)
+    Ok(db.create_profile(&name, &profile_dir.to_string_lossy(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref(), forward_port)?)
 }
 
 #[tauri::command]
@@ -64,10 +65,11 @@ fn update_profile(
     homepage: Option<String>,
     icon_base64: Option<String>,
     tags: Option<String>,
+    forward_port: Option<u16>,
     state: State<AppState>,
 ) -> AppResult<bool> {
     let db = state.db.lock().map_err(|e| AppError::Other(e.to_string()))?;
-    Ok(db.update_profile(&id, name.as_deref(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref())?)
+    Ok(db.update_profile(&id, name.as_deref(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref(), forward_port)?)
 }
 
 #[tauri::command]
@@ -95,14 +97,14 @@ fn launch_chrome(
 
     let profile_dir = PathBuf::from(&profile.data_dir_path);
     
-    // Use the provided URL if available, otherwise use the profile's homepage
-    let launch_url = url.as_deref().or(profile.homepage.as_deref());
-
-    // Find a free port for CDP
+    // Always find a free port for CDP (local only)
     let debug_port = std::net::TcpListener::bind("127.0.0.1:0")
         .ok()
         .and_then(|l| l.local_addr().ok())
         .map(|a| a.port());
+
+    // Use the provided URL if available, otherwise use the profile's homepage
+    let launch_url = url.as_deref().or(profile.homepage.as_deref());
 
     let start_inst = std::time::Instant::now();
     let result = state.chrome_manager.launch_chrome(
@@ -114,7 +116,37 @@ fn launch_chrome(
     );
 
     if result.success {
-        db.update_profile_status(&id, true, result.pid.map(|p| p as i32))?;
+        db.update_profile_status(&id, true, result.pid.map(|p| p as i32), debug_port)?;
+        
+        // Setup forwarding if configured
+        if let (Some(local_port), Some(fwd_port)) = (debug_port, profile.forward_port) {
+            let profile_id = id.clone();
+            tauri::async_runtime::spawn(async move {
+                println!("[Lib] Starting CDP forwarder: 0.0.0.0:{} -> 127.0.0.1:{}", fwd_port, local_port);
+                if let Ok(listener) = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", fwd_port)).await {
+                    loop {
+                        // Check if browser is still running (very basic check, could be improved)
+                        // For now, we just accept connections as long as the listener is alive
+                        match listener.accept().await {
+                            Ok((mut client, _)) => {
+                                tokio::spawn(async move {
+                                    if let Ok(mut server) = tokio::net::TcpStream::connect(format!("127.0.0.1:{}", local_port)).await {
+                                        let _ = tokio::io::copy_bidirectional(&mut client, &mut server).await;
+                                    }
+                                });
+                            }
+                            Err(e) => {
+                                println!("[Lib] Forwarder accept error: {}", e);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    println!("[Lib] Failed to bind forwarder port {}", fwd_port);
+                }
+                println!("[Lib] CDP forwarder stopped for {}", profile_id);
+            });
+        }
         
         // Start async monitoring task using debug_port
         if let Some(port) = debug_port {

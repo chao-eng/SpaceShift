@@ -55,7 +55,7 @@ impl BrowserMonitor {
                     if is_running != profile.is_running {
                         println!("[Monitor] '{}' status confirm change: {} -> {}", profile.name, profile.is_running, is_running);
                         let db_lock = db.lock().unwrap();
-                        let _ = db_lock.update_profile_status(&profile.id, is_running, None);
+                        let _ = db_lock.update_profile_status(&profile.id, is_running, None, None);
                         
                         let _ = app_handle.emit("browser-status-update", serde_json::json!({
                             "id": profile.id,

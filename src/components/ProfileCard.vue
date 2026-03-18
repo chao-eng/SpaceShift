@@ -42,6 +42,14 @@
           <span v-if="profile.is_running" class="status-tag running">
             <span class="status-dot"></span>
             {{ $t('profile.status.running') }}
+            <span v-if="profile.debug_port" class="port-info" :title="$t('profile.status.cdpPort')">
+              <span class="port-divider">|</span>
+              <span class="port-num">{{ profile.debug_port }}</span>
+            </span>
+            <span v-if="profile.forward_port" class="port-info forward" :title="$t('profile.status.forwardPort')">
+              <span class="port-divider">➔</span>
+              <span class="port-num">{{ profile.forward_port }}</span>
+            </span>
           </span>
           <span v-else-if="profile.last_opened_at" class="last-opened">
             <el-icon><Timer /></el-icon>
@@ -529,12 +537,40 @@ const handleCommand = (command: string) => {
   }
 }
 
-// 更多按钮
-.more-btn {
-  &:hover {
-    transform: rotate(90deg);
+  .more-btn {
+    &:hover {
+      transform: rotate(90deg);
+    }
   }
-}
+
+  .port-info {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    color: var(--primary-600);
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    background: var(--primary-50);
+    padding: 0 4px;
+    border-radius: 4px;
+    border: 1px solid var(--primary-200);
+    
+    .port-divider {
+      margin: 0 4px;
+      opacity: 0.5;
+    }
+
+    &.forward {
+      background: var(--secondary-50);
+      border-color: var(--secondary-200);
+      color: var(--secondary-600);
+      margin-left: 2px;
+      
+      .port-num {
+        color: var(--secondary-700);
+      }
+    }
+  }
 
 </style>
 

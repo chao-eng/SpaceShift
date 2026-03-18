@@ -39,7 +39,9 @@
             "justNow": "刚刚",
             "minutesAgo": "{n}分钟前",
             "hoursAgo": "{n}小时前",
-            "daysAgo": "{n}天前"
+            "daysAgo": "{n}天前",
+            "cdpPort": "CDP 端口",
+            "forwardPort": "CDP 转发端口"
         },
         "actions": {
             "launch": "启动浏览器",
@@ -61,7 +63,9 @@
             "homepagePlaceholder": "https://www.google.com",
             "icon": "配置头像",
             "tags": "标签",
-            "tagsPlaceholder": "输入标签并回车 (可选)"
+            "tagsPlaceholder": "输入标签并回车 (可选)",
+            "forwardPortPlaceholder": "不填则不开启转发",
+            "forwardPortTip": "将 CDP 端口转发到 0.0.0.0 以允许局域网/公网访问"
         }
     },
     "performance": {

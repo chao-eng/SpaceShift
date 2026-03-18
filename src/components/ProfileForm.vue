@@ -41,6 +41,18 @@
         </el-input>
       </el-form-item>
 
+      <el-form-item :label="$t('profile.status.forwardPort')" prop="forward_port">
+        <el-input-number
+          v-model="form.forward_port"
+          :placeholder="$t('profile.form.forwardPortPlaceholder')"
+          :min="1"
+          :max="65535"
+          controls-position="right"
+          style="width: 100%"
+        />
+        <div class="form-tip">{{ $t('profile.form.forwardPortTip') }}</div>
+      </el-form-item>
+
       <el-form-item :label="$t('profile.form.icon')">
         <div class="icon-selector">
           <div class="current-icon" @click="triggerFileInput">
@@ -128,6 +140,7 @@ const form = ref({
   homepage: '',
   icon_base64: '',
   tags: '',
+  forward_port: undefined as number | undefined,
 });
 
 const tagList = ref<string[]>([]);
@@ -156,6 +169,7 @@ watch(
         homepage: profile.homepage || '',
         icon_base64: profile.icon_base64 || '',
         tags: profile.tags || '',
+        forward_port: profile.forward_port,
       };
       tagList.value = profile.tags?.split(',').map(t => t.trim()).filter(Boolean) || [];
     } else {
@@ -165,6 +179,7 @@ watch(
         homepage: '',
         icon_base64: '',
         tags: '',
+        forward_port: undefined,
       };
       tagList.value = [];
     }
@@ -213,7 +228,8 @@ const handleSubmit = async () => {
         form.value.chrome_path || undefined,
         form.value.homepage || undefined,
         form.value.icon_base64 || undefined,
-        tags || undefined
+        tags || undefined,
+        form.value.forward_port || undefined
       );
       ElMessage.success(t('common.success'));
     } else {
@@ -222,7 +238,8 @@ const handleSubmit = async () => {
         form.value.chrome_path || undefined,
         form.value.homepage || undefined,
         form.value.icon_base64 || undefined,
-        tags || undefined
+        tags || undefined,
+        form.value.forward_port || undefined
       );
       ElMessage.success(t('common.success'));
     }
