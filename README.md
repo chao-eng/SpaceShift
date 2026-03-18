@@ -14,6 +14,7 @@ SpaceShift is a modern, high-performance, cross-platform multi-profile browser m
 - 🗄 **Backup & Restore**: Easily snapshot and restore your profile directories with a single click.
 - 🌐 **Internationalization**: Fully localized in English and Simplified Chinese out of the box.
 - ⚡ **Batch Operations**: Multi-select support to staggered-launch multiple profiles at once without spiking your CPU.
+- 📡 **CDP Forwarding**: Configure a dedicated "forwarding port" (listening on 0.0.0.0) to proxy remote Chrome DevTools Protocol traffic to the browser's local debug port, enabling LAN/WAN automation.
 - 🛡 **Smart Lock Release**: Built-in repair utility to clean up orphaned Chrome lockfiles (`SingletonLock`, `Parent.lock`) when browser processes crash abruptly.
 
 ## 📦 Tech Stack
@@ -62,6 +63,7 @@ yarn tauri build
 - **Monitoring**: After launching a profile, click the "..." menu and select "Performance" to view real-time CDP timings for recent launches.
 - **Repair**: If a profile is stuck and won't launch, click "Repair (Unlock)" to wipe lingering Chromium lockfiles.
 - **Batch Launch**: Check multiple profile cards to trigger the batch operations toolbar, allowing you to launch several instances with built-in startup delays.
+- **Remote Automation**: In the profile creation/edit form, set a **CDP Forward Port**. This allows you to connect automated tools like Puppeteer or Playwright from other machines on your network via `0.0.0.0:port`.
 
 ## 📝 License
 
