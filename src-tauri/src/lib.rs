@@ -128,10 +128,14 @@ fn launch_chrome(
                         // Check if browser is still running (very basic check, could be improved)
                         // For now, we just accept connections as long as the listener is alive
                         match listener.accept().await {
-                            Ok((mut client, _)) => {
+                            Ok((mut client, addr)) => {
+                                let _ = client.set_nodelay(true);
                                 tokio::spawn(async move {
                                     if let Ok(mut server) = tokio::net::TcpStream::connect(format!("127.0.0.1:{}", local_port)).await {
-                                        let _ = tokio::io::copy_bidirectional(&mut client, &mut server).await;
+                                        let _ = server.set_nodelay(true);
+                                        if let Err(e) = tokio::io::copy_bidirectional(&mut client, &mut server).await {
+                                            // Handle error if needed
+                                        }
                                     }
                                 });
                             }
