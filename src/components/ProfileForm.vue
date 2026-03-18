@@ -47,8 +47,6 @@
           :placeholder="$t('profile.form.forwardPortPlaceholder')"
           :min="1"
           :max="65535"
-          controls-position="right"
-          style="width: 100%"
         />
         <div class="form-tip">{{ $t('profile.form.forwardPortTip') }}</div>
       </el-form-item>
