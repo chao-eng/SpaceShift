@@ -3,7 +3,7 @@
     <div class="header-left">
       <div class="brand">
         <div class="brand-icon">
-          <img src="../../assets/logo.svg" alt="SpaceShift logo" class="logo-image" />
+          <img src="../../assets/logo.png" alt="SpaceShift logo" class="logo-image" />
         </div>
         <div class="brand-text">
           <h1 class="brand-title">SpaceShift</h1>
