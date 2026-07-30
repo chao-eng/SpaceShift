@@ -45,18 +45,21 @@ fn create_profile(
     icon_base64: Option<String>,
     tags: Option<String>,
     forward_port: Option<u16>,
+    disable_extensions: Option<bool>,
+    debugger_mode: Option<bool>,
+    debug_port_config: Option<u16>,
     app_handle: AppHandle,
     state: State<AppState>,
 ) -> AppResult<Profile> {
     let app_data_dir = app_handle.path().app_data_dir()?;
     let profiles_dir = app_data_dir.join("profiles");
-    
+
     std::fs::create_dir_all(&profiles_dir)?;
-    
+
     let profile_dir = ProfileManager::create_profile_directory(&profiles_dir, &name)?;
-    
+
     let db = state.db.lock().map_err(|e| AppError::Other(e.to_string()))?;
-    Ok(db.create_profile(&name, &profile_dir.to_string_lossy(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref(), forward_port)?)
+    Ok(db.create_profile(&name, &profile_dir.to_string_lossy(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref(), forward_port, disable_extensions.unwrap_or(true), debugger_mode.unwrap_or(true), debug_port_config)?)
 }
 
 #[tauri::command]
@@ -68,10 +71,13 @@ fn update_profile(
     icon_base64: Option<String>,
     tags: Option<String>,
     forward_port: Option<u16>,
+    disable_extensions: Option<bool>,
+    debugger_mode: Option<bool>,
+    debug_port_config: Option<u16>,
     state: State<AppState>,
 ) -> AppResult<bool> {
     let db = state.db.lock().map_err(|e| AppError::Other(e.to_string()))?;
-    Ok(db.update_profile(&id, name.as_deref(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref(), forward_port)?)
+    Ok(db.update_profile(&id, name.as_deref(), chrome_path.as_deref(), homepage.as_deref(), icon_base64.as_deref(), tags.as_deref(), forward_port, disable_extensions, debugger_mode, debug_port_config)?)
 }
 
 #[tauri::command]
@@ -98,23 +104,34 @@ fn launch_chrome(
         .ok_or(AppError::ProfileNotFound)?;
 
     let profile_dir = PathBuf::from(&profile.data_dir_path);
-    
-    // Always find a free port for CDP (local only)
-    let debug_port = std::net::TcpListener::bind("127.0.0.1:0")
-        .ok()
-        .and_then(|l| l.local_addr().ok())
-        .map(|a| a.port());
+
+    // Determine debug port based on debugger_mode setting
+    let debug_port = if profile.debugger_mode {
+        if let Some(configured) = profile.debug_port_config {
+            // Use user-configured port
+            Some(configured)
+        } else {
+            // Auto-allocate a free port for CDP (local only)
+            std::net::TcpListener::bind("127.0.0.1:0")
+                .ok()
+                .and_then(|l| l.local_addr().ok())
+                .map(|a| a.port())
+        }
+    } else {
+        None
+    };
 
     // Use the provided URL if available, otherwise use the profile's homepage
     let launch_url = url.as_deref().or(profile.homepage.as_deref());
 
     let start_inst = std::time::Instant::now();
     let result = state.chrome_manager.launch_chrome(
-        &id, 
-        &profile_dir, 
+        &id,
+        &profile_dir,
         profile.chrome_path.as_deref(),
         launch_url,
-        debug_port
+        debug_port,
+        profile.disable_extensions,
     );
 
     if result.success {

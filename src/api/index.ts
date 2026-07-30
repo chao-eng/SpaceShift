@@ -7,11 +7,11 @@ export const api = {
 
   getProfile: (id: string): Promise<Profile | null> => invoke('get_profile', { id }),
 
-  createProfile: (name: string, chromePath?: string, homepage?: string, iconBase64?: string, tags?: string, forwardPort?: number): Promise<Profile> =>
-    invoke('create_profile', { name, chromePath, homepage, iconBase64, tags, forwardPort }),
+  createProfile: (name: string, chromePath?: string, homepage?: string, iconBase64?: string, tags?: string, forwardPort?: number, disableExtensions?: boolean, debuggerMode?: boolean, debugPortConfig?: number): Promise<Profile> =>
+    invoke('create_profile', { name, chromePath, homepage, iconBase64, tags, forwardPort, disableExtensions, debuggerMode, debugPortConfig }),
 
-  updateProfile: (id: string, name?: string, chromePath?: string, homepage?: string, iconBase64?: string, tags?: string, forwardPort?: number): Promise<boolean> =>
-    invoke('update_profile', { id, name, chromePath, homepage, iconBase64, tags, forwardPort }),
+  updateProfile: (id: string, name?: string, chromePath?: string, homepage?: string, iconBase64?: string, tags?: string, forwardPort?: number | null, disableExtensions?: boolean, debuggerMode?: boolean, debugPortConfig?: number | null): Promise<boolean> =>
+    invoke('update_profile', { id, name, chromePath, homepage, iconBase64, tags, forwardPort, disableExtensions, debuggerMode, debugPortConfig }),
 
   deleteProfile: (id: string): Promise<boolean> => invoke('delete_profile', { id }),
 

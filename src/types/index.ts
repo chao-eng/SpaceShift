@@ -14,6 +14,9 @@ export interface Profile {
   pid?: number;
   debug_port?: number;
   forward_port?: number;
+  disable_extensions: boolean;
+  debugger_mode: boolean;
+  debug_port_config?: number;
 }
 
 export interface Backup {

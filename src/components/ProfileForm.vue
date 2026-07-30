@@ -2,8 +2,9 @@
   <el-dialog
     v-model="visible"
     :title="isEdit ? $t('profile.form.titleEdit') : $t('profile.form.titleCreate')"
-    width="500px"
+    width="480px"
     destroy-on-close
+    class="profile-form-dialog"
   >
     <el-form
       ref="formRef"
@@ -11,6 +12,7 @@
       :rules="rules"
       label-width="80px"
       label-position="top"
+      class="profile-form"
     >
       <el-form-item :label="$t('profile.form.name')" prop="name">
         <el-input
@@ -21,74 +23,105 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('profile.form.chromePath')" prop="chrome_path">
-        <el-input
-          v-model="form.chrome_path"
-          :placeholder="$t('profile.form.chromePathPlaceholder')"
-          clearable
-        />
-      </el-form-item>
+      <div class="form-row">
+        <el-form-item :label="$t('profile.form.chromePath')" prop="chrome_path" class="flex-1">
+          <el-input
+            v-model="form.chrome_path"
+            :placeholder="$t('profile.form.chromePathPlaceholder')"
+            clearable
+          />
+        </el-form-item>
 
-      <el-form-item :label="$t('profile.form.homepage')" prop="homepage">
-        <el-input
-          v-model="form.homepage"
-          :placeholder="$t('profile.form.homepagePlaceholder')"
-          clearable
-        >
-          <template #prefix>
-            <el-icon><Monitor /></el-icon>
-          </template>
-        </el-input>
-      </el-form-item>
+        <el-form-item :label="$t('profile.form.homepage')" prop="homepage" class="flex-1">
+          <el-input
+            v-model="form.homepage"
+            :placeholder="$t('profile.form.homepagePlaceholder')"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><Monitor /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+      </div>
 
-      <el-form-item :label="$t('profile.status.forwardPort')" prop="forward_port">
-        <el-input-number
-          v-model="form.forward_port"
-          :placeholder="$t('profile.form.forwardPortPlaceholder')"
-          :min="1"
-          :max="65535"
-        />
-        <div class="form-tip">{{ $t('profile.form.forwardPortTip') }}</div>
-      </el-form-item>
-
-      <el-form-item :label="$t('profile.form.icon')">
-        <div class="icon-selector">
-          <div class="current-icon" @click="triggerFileInput">
-            <img v-if="form.icon_base64" :src="form.icon_base64" alt="Icon" />
-            <el-avatar v-else :size="80" :icon="UserFilled" />
-            <div class="icon-overlay">
-              <el-icon><Camera /></el-icon>
-              <span>{{ $t('profile.actions.edit') }}</span>
-            </div>
+      <div class="form-row">
+        <el-form-item :label="$t('profile.form.debuggerMode')" class="toggle-item">
+          <div class="toggle-row">
+            <el-switch v-model="form.debugger_mode" />
           </div>
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            style="display: none"
-            @change="handleFileChange"
-          />
-        </div>
-      </el-form-item>
+        </el-form-item>
 
-      <el-form-item :label="$t('profile.form.tags')">
-        <el-select
-          v-model="tagList"
-          multiple
-          filterable
-          allow-create
-          default-first-option
-          :placeholder="$t('profile.form.tagsPlaceholder')"
-          style="width: 100%"
-        >
-          <el-option
-            v-for="tag in existingTags"
-            :key="tag"
-            :label="tag"
-            :value="tag"
-          />
-        </el-select>
-      </el-form-item>
+        <el-form-item :label="$t('profile.form.disableExtensions')" class="toggle-item">
+          <div class="toggle-row">
+            <el-switch v-model="form.disable_extensions" />
+          </div>
+        </el-form-item>
+      </div>
+
+      <template v-if="form.debugger_mode">
+        <div class="form-row">
+          <el-form-item :label="$t('profile.form.debugPortConfig')" prop="debug_port_config" class="flex-1">
+            <el-input-number
+              v-model="form.debug_port_config"
+              :placeholder="$t('profile.form.debugPortConfigPlaceholder')"
+              :min="1"
+              :max="65535"
+              class="full-width"
+            />
+          </el-form-item>
+
+          <el-form-item :label="$t('profile.status.forwardPort')" prop="forward_port" class="flex-1">
+            <el-input-number
+              v-model="form.forward_port"
+              :placeholder="$t('profile.form.forwardPortPlaceholder')"
+              :min="1"
+              :max="65535"
+              class="full-width"
+            />
+          </el-form-item>
+        </div>
+      </template>
+
+      <div class="form-row align-center">
+        <el-form-item :label="$t('profile.form.icon')" class="icon-item">
+          <div class="icon-selector">
+            <div class="current-icon" @click="triggerFileInput">
+              <img v-if="form.icon_base64" :src="form.icon_base64" alt="Icon" />
+              <el-avatar v-else :size="64" :icon="UserFilled" />
+              <div class="icon-overlay">
+                <el-icon><Camera /></el-icon>
+              </div>
+            </div>
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleFileChange"
+            />
+          </div>
+        </el-form-item>
+
+        <el-form-item :label="$t('profile.form.tags')" class="flex-1">
+          <el-select
+            v-model="tagList"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            :placeholder="$t('profile.form.tagsPlaceholder')"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="tag in existingTags"
+              :key="tag"
+              :label="tag"
+              :value="tag"
+            />
+          </el-select>
+        </el-form-item>
+      </div>
     </el-form>
 
     <template #footer>
@@ -139,6 +172,9 @@ const form = ref({
   icon_base64: '',
   tags: '',
   forward_port: undefined as number | undefined,
+  disable_extensions: true,
+  debugger_mode: true,
+  debug_port_config: undefined as number | undefined,
 });
 
 const tagList = ref<string[]>([]);
@@ -168,6 +204,9 @@ watch(
         icon_base64: profile.icon_base64 || '',
         tags: profile.tags || '',
         forward_port: profile.forward_port,
+        disable_extensions: profile.disable_extensions ?? true,
+        debugger_mode: profile.debugger_mode ?? true,
+        debug_port_config: profile.debug_port_config,
       };
       tagList.value = profile.tags?.split(',').map(t => t.trim()).filter(Boolean) || [];
     } else {
@@ -178,6 +217,9 @@ watch(
         icon_base64: '',
         tags: '',
         forward_port: undefined,
+        disable_extensions: true,
+        debugger_mode: true,
+        debug_port_config: undefined,
       };
       tagList.value = [];
     }
@@ -227,7 +269,10 @@ const handleSubmit = async () => {
         form.value.homepage || undefined,
         form.value.icon_base64 || undefined,
         tags || undefined,
-        form.value.forward_port || undefined
+        form.value.forward_port ?? null,
+        form.value.disable_extensions,
+        form.value.debugger_mode,
+        form.value.debug_port_config ?? null
       );
       ElMessage.success(t('common.success'));
     } else {
@@ -237,7 +282,10 @@ const handleSubmit = async () => {
         form.value.homepage || undefined,
         form.value.icon_base64 || undefined,
         tags || undefined,
-        form.value.forward_port || undefined
+        form.value.forward_port || undefined,
+        form.value.disable_extensions,
+        form.value.debugger_mode,
+        form.value.debug_port_config || undefined
       );
       ElMessage.success(t('common.success'));
     }
@@ -256,7 +304,7 @@ const handleSubmit = async () => {
 <style scoped lang="scss">
 :deep(.el-dialog__header) {
   background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-3) var(--space-5);
   margin-right: 0;
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }
@@ -264,17 +312,17 @@ const handleSubmit = async () => {
 :deep(.el-dialog__title) {
   color: white;
   font-weight: var(--font-semibold);
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
 }
 
 :deep(.el-dialog__headerbtn) {
   top: 50%;
   transform: translateY(-50%);
-  
+
   .el-dialog__close {
     color: white;
-    font-size: 20px;
-    
+    font-size: 18px;
+
     &:hover {
       color: rgba(255, 255, 255, 0.8);
     }
@@ -282,35 +330,81 @@ const handleSubmit = async () => {
 }
 
 :deep(.el-dialog__body) {
-  padding: var(--space-6);
+  padding: var(--space-4) var(--space-5);
 }
 
 :deep(.el-dialog__footer) {
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-3) var(--space-5);
   border-top: 1px solid var(--border-light);
 }
 
-:deep(.el-form-item__label) {
-  font-weight: var(--font-medium);
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
+// Form layout - compact
+.profile-form {
+  :deep(.el-form-item) {
+    margin-bottom: var(--space-3);
+  }
 
-:deep(.el-input__wrapper) {
-  border-radius: var(--radius-lg);
-  padding: var(--space-2) var(--space-4);
-  
-  &.is-focus {
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  :deep(.el-form-item__label) {
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    padding-bottom: var(--space-1);
+    line-height: 1.4;
+  }
+
+  :deep(.el-input__wrapper) {
+    border-radius: var(--radius-lg);
+    padding: var(--space-1) var(--space-3);
+
+    &.is-focus {
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+  }
+
+  :deep(.el-input-number.full-width) {
+    width: 100%;
   }
 }
 
-:deep(.el-textarea__inner) {
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4);
-  
-  &:focus {
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+// Two-column row layout
+.form-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+
+  &.align-center {
+    align-items: center;
+  }
+
+  .flex-1 {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // Toggle items - keep label + switch inline, no stacking
+  .toggle-item {
+    flex: 1;
+
+    :deep(.el-form-item__content) {
+      display: flex;
+      align-items: center;
+      min-height: 32px;
+    }
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    height: 32px;
+  }
+
+  .icon-item {
+    flex-shrink: 0;
+    margin-bottom: 0;
+
+    :deep(.el-form-item__content) {
+      line-height: 1;
+    }
   }
 }
 
@@ -321,32 +415,32 @@ const handleSubmit = async () => {
 
 .current-icon {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   border-radius: var(--radius-full);
   cursor: pointer;
   overflow: hidden;
-  border: 3px solid var(--border-light);
+  border: 2px solid var(--border-light);
   transition: all var(--transition-fast);
-  box-shadow: var(--shadow-md);
-  
+  box-shadow: var(--shadow-sm);
+
   &:hover {
     border-color: var(--primary-400);
     transform: scale(1.05);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-md);
   }
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: var(--radius-full);
   }
-  
+
   :deep(.el-avatar) {
     width: 100%;
     height: 100%;
-    font-size: 36px;
+    font-size: 28px;
     background: linear-gradient(135deg, var(--primary-100), var(--secondary-100));
     color: var(--primary-600);
   }
@@ -360,22 +454,15 @@ const handleSubmit = async () => {
   bottom: 0;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: white;
   opacity: 0;
   transition: all var(--transition-fast);
   border-radius: var(--radius-full);
-  
+
   .el-icon {
-    font-size: 24px;
-    margin-bottom: var(--space-1);
-  }
-  
-  span {
-    font-size: var(--text-xs);
-    font-weight: var(--font-medium);
+    font-size: 20px;
   }
 }
 
@@ -383,21 +470,10 @@ const handleSubmit = async () => {
   opacity: 1;
 }
 
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  
-  .el-button {
-    padding: var(--space-3) var(--space-6);
-    border-radius: var(--radius-lg);
-    font-weight: var(--font-medium);
-  }
-}
-
 .form-tip {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
   margin-top: var(--space-1);
+  line-height: 1.4;
 }
 </style>

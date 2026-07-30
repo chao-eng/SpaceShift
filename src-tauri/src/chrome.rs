@@ -20,12 +20,12 @@ impl ChromeManager {
         ChromeManager
     }
 
-    pub fn launch_chrome(&self, _profile_id: &str, user_data_dir: &PathBuf, chrome_path: Option<&str>, url: Option<&str>, debug_port: Option<u16>) -> ChromeLaunchResult {
+    pub fn launch_chrome(&self, _profile_id: &str, user_data_dir: &PathBuf, chrome_path: Option<&str>, url: Option<&str>, debug_port: Option<u16>, disable_extensions: bool) -> ChromeLaunchResult {
         let mut cmd = if let Some(path) = chrome_path {
             Command::new(path)
         } else {
             let found_path = self.find_chrome_executable();
-            
+
             #[cfg(target_os = "macos")]
             {
                 let mut c = Command::new("open");
@@ -35,7 +35,7 @@ impl ChromeManager {
                 c.arg("--args");
                 c
             }
-            
+
             #[cfg(not(target_os = "macos"))]
             {
                 Command::new(found_path.unwrap_or_else(|| {
@@ -47,16 +47,20 @@ impl ChromeManager {
         };
 
         cmd.arg(format!("--user-data-dir={}", user_data_dir.display()));
-        
+
         if let Some(port) = debug_port {
             cmd.arg(format!("--remote-debugging-port={}", port));
+        }
+
+        if disable_extensions {
+            cmd.arg("--disable-extensions");
         }
 
         let optimized_args = NetworkOptimizer::get_optimized_args();
         for arg in optimized_args {
             cmd.arg(arg);
         }
-        
+
         if let Some(url) = url {
             cmd.arg(url);
         }
